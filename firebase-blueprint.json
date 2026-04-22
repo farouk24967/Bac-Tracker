@@ -1,0 +1,170 @@
+{
+  "entities": {
+    "users": {
+      "title": "User Profile",
+      "description": "Stores student information, goals, and progress.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "displayName": { "type": "string", "description": "Student's name" },
+        "email": { "type": "string", "description": "Student's email" },
+        "photoURL": { "type": "string", "description": "Student's photo URL" },
+        "stream": { "type": "string", "description": "Bac stream (e.g., Sciences, Maths, Lettres)" },
+        "currentAverage": { "type": "number", "description": "Current average grade" },
+        "targetGrade": { "type": "number", "description": "Target Bac grade" },
+        "points": { "type": "number", "description": "Gamification points" },
+        "badges": { "type": "array", "items": { "type": "string" }, "description": "Earned badges" },
+        "onboardingCompleted": { "type": "boolean", "description": "Whether the student completed the initial setup" },
+        "currentStreak": { "type": "number", "description": "Number of consecutive active days" },
+        "lastActivityDate": { "type": "string", "format": "date", "description": "Date of last activity (YYYY-MM-DD)" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "passions": { "type": "array", "items": { "type": "string" } },
+        "hobbies": { "type": "array", "items": { "type": "string" } },
+        "universityGoal": { "type": "string" },
+        "discoverySource": { "type": "string" },
+        "subjectTargets": { "type": "object", "additionalProperties": { "type": "number" } },
+        "aiAnalysis": {
+          "type": "object",
+          "properties": {
+            "strengths": { "type": "array", "items": { "type": "string" } },
+            "weaknesses": { "type": "array", "items": { "type": "string" } },
+            "recommendedPlan": { "type": "string" }
+          }
+        }
+      },
+      "required": ["uid", "email"]
+    },
+    "tasks": {
+      "title": "Task",
+      "description": "Daily or weekly study tasks for the student.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Owner's UID" },
+        "title": { "type": "string", "description": "Task title" },
+        "subject": { "type": "string", "description": "Associated subject" },
+        "completed": { "type": "boolean", "description": "Completion status" },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"] }
+      },
+      "required": ["uid", "title", "completed"]
+    },
+    "subjectProgress": {
+      "title": "Subject Progress",
+      "description": "Tracks progress for a specific subject.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Owner's UID" },
+        "subjectId": { "type": "string", "description": "Subject identifier" },
+        "progress": { "type": "number", "description": "Progress percentage (0-100)" },
+        "strength": { "type": "number", "description": "Self-assessed strength (1-5)" }
+      },
+      "required": ["uid", "subjectId", "progress"]
+    },
+    "notifications": {
+      "title": "Notification",
+      "description": "System or task-related alerts for the student.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Owner's UID" },
+        "title": { "type": "string", "description": "Notification title" },
+        "message": { "type": "string", "description": "Notification message" },
+        "type": { "type": "string", "enum": ["info", "warning", "success", "task"] },
+        "read": { "type": "boolean", "description": "Read status" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "title", "message", "read", "createdAt"]
+    },
+    "studyGoals": {
+      "title": "Study Goal",
+      "description": "Specific weekly or monthly study goals.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Owner's UID" },
+        "title": { "type": "string", "description": "Goal title (e.g., 'Review 5 chapters')" },
+        "period": { "type": "string", "enum": ["weekly", "monthly"], "description": "Goal period" },
+        "targetValue": { "type": "number", "description": "Target number of units (e.g., 5)" },
+        "currentValue": { "type": "number", "description": "Current progress (e.g., 2)" },
+        "unit": { "type": "string", "description": "Unit (e.g., 'chapters', 'exercises')" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "deadline": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "title", "period", "targetValue", "currentValue"]
+    },
+    "scheduledSessions": {
+      "title": "Scheduled Session",
+      "description": "AI-generated study sessions.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Owner's UID" },
+        "title": { "type": "string", "description": "Session title" },
+        "date": { "type": "string", "description": "Session date (YYYY-MM-DD)" },
+        "duration": { "type": "number", "description": "Duration in minutes" },
+        "description": { "type": "string", "description": "Session details" },
+        "subjectId": { "type": "string", "description": "Associated subject" },
+        "completed": { "type": "boolean", "description": "Completion status" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "title", "date", "duration", "description", "completed"]
+    },
+    "studySessions": {
+      "title": "Study Session",
+      "description": "Actual study sessions completed by the student.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Owner's UID" },
+        "duration": { "type": "number", "description": "Duration in seconds" },
+        "date": { "type": "string", "description": "Session date (YYYY-MM-DD)" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "duration", "date", "createdAt"]
+    },
+    "activityLog": {
+      "title": "Activity Log",
+      "description": "Log of student activities for the memory feature.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Owner's UID" },
+        "type": { "type": "string", "description": "Type of activity (e.g., task_completed, study_session)" },
+        "title": { "type": "string", "description": "Activity title" },
+        "subject": { "type": "string", "description": "Associated subject" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "date": { "type": "string", "description": "Activity date (YYYY-MM-DD)" }
+      },
+      "required": ["uid", "type", "title", "timestamp", "date"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "users",
+      "description": "Individual student profiles."
+    },
+    "/tasks/{taskId}": {
+      "schema": "tasks",
+      "description": "Student study tasks."
+    },
+    "/subjectProgress/{progressId}": {
+      "schema": "subjectProgress",
+      "description": "Progress tracking per subject."
+    },
+    "/notifications/{notificationId}": {
+      "schema": "notifications",
+      "description": "Student notifications."
+    },
+    "/studyGoals/{goalId}": {
+      "schema": "studyGoals",
+      "description": "Weekly or monthly study goals."
+    },
+    "/scheduledSessions/{sessionId}": {
+      "schema": "scheduledSessions",
+      "description": "AI-generated study sessions."
+    },
+    "/studySessions/{sessionId}": {
+      "schema": "studySessions",
+      "description": "Completed study sessions."
+    },
+    "/activityLog/{logId}": {
+      "schema": "activityLog",
+      "description": "Student activity logs."
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "Bac Tracker",
+  "description": "Assistant intelligent pour le Bac en Algérie. Planning personnalisé par IA, rappels intelligents sur smartphone, et ressources pédagogiques modernes.",
+  "requestFramePermissions": [
+    "notifications"
+  ]
+}
