@@ -36,7 +36,9 @@ import { translations } from '../translations';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
+import { updateStreak, checkBadges } from '../lib/gamificationUtils';
 import { generateStudySchedule } from '../services/geminiService';
+import { StreakAnimation } from './StreakAnimation';
 import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, addWeeks, subWeeks, subDays } from 'date-fns';
 import { fr, arDZ, enUS, es } from 'date-fns/locale';
 
@@ -73,6 +75,7 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
   const [showForm, setShowForm] = useState(false);
   const [editingSession, setEditingSession] = useState<ScheduledSession | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [showStreakAnim, setShowStreakAnim] = useState(false);
   
   const [manualSession, setManualSession] = useState({
     title: '',
@@ -217,6 +220,15 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
           read: false,
           createdAt: new Date().toISOString()
         });
+
+        // Trigger Streak Update
+        const newStreak = await updateStreak(userProfile);
+        if (newStreak > userProfile.currentStreak) {
+          setShowStreakAnim(true);
+        }
+
+        // Check for specific badges related to calendar
+        await checkBadges(userProfile, { action: 'session_finished' });
       }
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, path);
@@ -295,6 +307,12 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
 
   return (
     <div className="space-y-6 pb-20">
+      <StreakAnimation 
+        streak={userProfile.currentStreak || 0} 
+        isVisible={showStreakAnim} 
+        onClose={() => setShowStreakAnim(false)} 
+        lang={lang}
+      />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">

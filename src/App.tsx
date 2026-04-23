@@ -94,9 +94,6 @@ const App: React.FC = () => {
           if (docSnap.exists()) {
             const profileData = docSnap.data() as UserProfile;
             setProfile(profileData);
-            
-            // Check & Update Streak on Login
-            await updateStreak(profileData);
 
             // Ensure user has a title based on XP
             if (!profileData.title) {

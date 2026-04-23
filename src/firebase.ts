@@ -1,35 +1,40 @@
 import { initializeApp } from 'firebase/app';
-import { 
-  getAuth, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
+import {
+  GoogleAuthProvider,
+  signInWithPopup,
   signOut,
-  indexedDBLocalPersistence,
-  initializeAuth,
-  browserPopupRedirectResolver
+  onAuthStateChanged,
+  browserLocalPersistence,
+  setPersistence,
 } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-// Initialize Auth with Persistence and Resolver specifically for Electron/Desktop support
-const auth = (() => {
-  // Check if we are in Electron or a browser environment that supports initializeAuth
+// Use browser local persistence (standard for web)
+setPersistence(auth, browserLocalPersistence);
+
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+/**
+ * Sign in with Google (Web version)
+ */
+export const signInWithGoogle = async () => {
   try {
-    return initializeAuth(app, {
-      persistence: indexedDBLocalPersistence,
-      popupRedirectResolver: browserPopupRedirectResolver
-    });
-  } catch (e) {
-    // Fallback for environments where initializeAuth might fail or already be initialized
-    return getAuth(app);
+    const result = await signInWithPopup(auth, googleProvider);
+    return result;
+  } catch (error: any) {
+    console.error('[Auth] Error:', error.code, error.message);
+    throw error;
   }
-})();
+};
 
-export { auth };
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
-export const googleProvider = new GoogleAuthProvider();
-
-export const signInWithGoogle = () => signInWithPopup(auth, googleProvider, browserPopupRedirectResolver);
 export const logout = () => signOut(auth);
+
+export { auth, db, googleProvider, onAuthStateChanged };

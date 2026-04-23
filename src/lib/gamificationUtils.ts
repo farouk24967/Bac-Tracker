@@ -127,37 +127,48 @@ export const updateStreak = async (userProfile: UserProfile) => {
   const today = new Date().toISOString().split('T')[0];
   const lastDate = userProfile.lastActivityDate;
   
-  if (lastDate === today) return userProfile.currentStreak;
+  // If activity was already recorded today, don't increment the streak count, 
+  // but we might still return the current streak.
+  if (lastDate === today) {
+    console.log('[Streak] Activity already recorded for today:', today);
+    return userProfile.currentStreak;
+  }
 
-  let newStreak = 1;
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayStr = yesterday.toISOString().split('T')[0];
 
+  let newStreak = 1;
+  const currentStreak = userProfile.currentStreak || 0;
+
   if (lastDate === yesterdayStr) {
-    newStreak = (userProfile.currentStreak || 0) + 1;
+    // Perfect! Consecutive day.
+    newStreak = currentStreak + 1;
+    console.log('[Streak] Consecutive day! New streak:', newStreak);
   } else {
-    // Streak broken, reset to 1 (since user is active today)
+    // Streak broken or first time.
     newStreak = 1;
+    console.log('[Streak] Streak broken or first day. Resetting to 1.');
   }
 
   const userRef = doc(db, 'users', userProfile.uid);
   
-  // Calculate bonus multiplier based on streak
-  let multiplier = 1;
-  if (newStreak >= 7) multiplier = 1.5;
-  else if (newStreak >= 3) multiplier = 1.2;
-
-  const pointsEarned = Math.floor(newStreak * 10 * multiplier);
+  // Calculate bonus points based on streak length
+  const basePoints = 20;
+  const streakBonus = Math.min(newStreak * 5, 100); // 5 points per day, max 100 bonus
+  const totalPoints = basePoints + streakBonus;
 
   await updateDoc(userRef, {
     currentStreak: newStreak,
     lastActivityDate: today,
-    points: (userProfile.points || 0) + pointsEarned
+    points: (userProfile.points || 0) + totalPoints
   });
 
-  // Check for streak badges
-  await checkBadges(userProfile, { action: 'streak_update', metadata: { streak: newStreak } });
+  // Check for streak-related badges
+  await checkBadges({ ...userProfile, currentStreak: newStreak, lastActivityDate: today }, { 
+    action: 'streak_update', 
+    metadata: { streak: newStreak } 
+  });
 
   return newStreak;
 };

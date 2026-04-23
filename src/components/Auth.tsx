@@ -5,16 +5,38 @@ import { motion, AnimatePresence } from 'motion/react';
 
 export const Auth: React.FC = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async () => {
+    console.log('[Auth] Current window location:', window.location.href);
     setIsLoggingIn(true);
+    setError(null);
     try {
       await signInWithGoogle();
-    } catch (error) {
-      console.error("Login failed:", error);
+      // onAuthStateChanged in App.tsx handles the redirect automatically
+    } catch (err: any) {
+      const code: string = err?.code ?? 'unknown';
+      console.error('[Auth] Login failed — code:', code, '| message:', err?.message);
       setIsLoggingIn(false);
+
+      if (code === 'auth/popup-closed-by-user') {
+        setError('La fenêtre de connexion a été fermée. Réessaie.');
+      } else if (code === 'auth/cancelled-popup-request') {
+        setError('Une connexion est déjà en cours.');
+      } else if (code === 'auth/popup-blocked') {
+        setError('La fenêtre popup a été bloquée. Autorise les popups pour cette app.');
+      } else if (code === 'auth/unauthorized-domain') {
+        setError(`Domaine non autorisé dans Firebase Console. (${window.location.hostname})`);
+      } else if (code === 'auth/network-request-failed') {
+        setError('Erreur réseau. Vérifie ta connexion internet.');
+      } else {
+        // Show the raw code so we can diagnose quickly
+        setError(`Erreur de connexion [${code}] — consulte la console pour plus de détails.`);
+      }
     }
   };
+
+
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-white relative">
@@ -75,6 +97,20 @@ export const Auth: React.FC = () => {
                 <Loader2 className="w-8 h-8 text-slate-900 animate-spin" />
                 <p className="text-slate-900 font-bold">Connexion en cours...</p>
               </motion.div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {error && (
+              <motion.p
+                key="error-msg"
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="mt-4 text-red-500 text-sm font-semibold bg-red-50 border border-red-100 rounded-2xl px-4 py-3"
+              >
+                {error}
+              </motion.p>
             )}
           </AnimatePresence>
 

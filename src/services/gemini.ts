@@ -1,6 +1,12 @@
-import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
+import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || 'AIzaSyCpvYN6oUVDNCA-f2uN1nT5BuwtpKCSvWc' });
+// Initialize the Gemini AI with the API Key from environment variables
+const ai = new GoogleGenAI({ 
+  apiKey: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCpvYN6oUVDNCA-f2uN1nT5BuwtpKCSvWc' 
+});
+
+// Use a stable and fast model
+const MODEL_NAME = 'gemini-1.5-flash';
 
 export async function getRecommendations(grades: any[], subjects: any[]) {
   const prompt = `
@@ -8,15 +14,15 @@ export async function getRecommendations(grades: any[], subjects: any[]) {
     Grades: ${JSON.stringify(grades)}
     Subjects: ${JSON.stringify(subjects)}
     
-    Provide a brief analysis of their strengths and weaknesses, and give 3 actionable recommendations to improve their average.
+    Provide a brief analysis of their strengths and weaknesses, and give 3 actionable recommendations to improve their average in French.
   `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.1-pro-preview',
-      contents: prompt,
+    const model = ai.getGenerativeModel({ model: MODEL_NAME });
+    const response = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
       config: {
-        thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
+        thinkingConfig: { thinkingLevel: ThinkingLevel.MEDIUM },
       }
     });
     return response.text;
@@ -28,9 +34,10 @@ export async function getRecommendations(grades: any[], subjects: any[]) {
 
 export async function analyzeImage(imageBase64: string, mimeType: string, prompt: string) {
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.1-pro-preview',
-      contents: {
+    const model = ai.getGenerativeModel({ model: MODEL_NAME });
+    const response = await model.generateContent({
+      contents: [{
+        role: 'user',
         parts: [
           {
             inlineData: {
@@ -40,9 +47,9 @@ export async function analyzeImage(imageBase64: string, mimeType: string, prompt
           },
           { text: prompt },
         ],
-      },
+      }],
       config: {
-        thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
+        thinkingConfig: { thinkingLevel: ThinkingLevel.MEDIUM },
       }
     });
     return response.text;
@@ -54,16 +61,16 @@ export async function analyzeImage(imageBase64: string, mimeType: string, prompt
 
 export async function chatWithGemini(prompt: string) {
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.1-pro-preview',
-      contents: prompt,
+    const model = ai.getGenerativeModel({ model: MODEL_NAME });
+    const response = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
       config: {
-        systemInstruction: "You are an AI tutor helping an Algerian BAC student. Be encouraging, concise, and helpful. You can help with math, physics, languages, and study tips.",
+        systemInstruction: "You are an AI tutor helping an Algerian BAC student. Be encouraging, concise, and helpful in French. You can help with math, physics, languages, and study tips.",
       }
     });
     return response.text;
   } catch (error) {
     console.error('Error chatting with Gemini:', error);
-    return 'Sorry, I am having trouble connecting right now.';
+    return 'Désolé, j\'ai du mal à me connecter en ce moment.';
   }
 }
