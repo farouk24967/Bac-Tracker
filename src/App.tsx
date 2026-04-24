@@ -87,43 +87,35 @@ const App: React.FC = () => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
-        try {
-          const docRef = doc(db, 'users', u.uid);
-          const docSnap = await getDoc(docRef);
-          
-          if (docSnap.exists()) {
-            const profileData = docSnap.data() as UserProfile;
+        const docRef = doc(db, 'users', u.uid);
+        
+        // Listen for profile changes (even if it doesn't exist yet)
+        unsubscribeProfile = onSnapshot(docRef, (snap) => {
+          if (snap.exists()) {
+            const profileData = snap.data() as UserProfile;
             setProfile(profileData);
 
             // Ensure user has a title based on XP
             if (!profileData.title) {
-              await checkXPProgression(profileData, profileData.points || 0);
+              checkXPProgression(profileData, profileData.points || 0);
             }
-            
-            // Listen for profile changes
-            const path = `users/${u.uid}`;
-            unsubscribeProfile = onSnapshot(docRef, (snap) => {
-              if (snap.exists()) {
-                setProfile(snap.data() as UserProfile);
-              }
-            }, (error) => {
-              handleFirestoreError(error, OperationType.GET, path);
-            });
           } else {
             setProfile(null);
           }
-        } catch (error) {
-          console.error("Error fetching profile:", error);
-          setProfile(null);
-        }
+          setLoading(false);
+        }, (error) => {
+          console.error("Error with profile snapshot:", error);
+          handleFirestoreError(error, OperationType.GET, `users/${u.uid}`);
+          setLoading(false);
+        });
       } else {
         setProfile(null);
         if (unsubscribeProfile) {
           unsubscribeProfile();
           unsubscribeProfile = null;
         }
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => {

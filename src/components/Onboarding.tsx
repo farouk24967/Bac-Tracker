@@ -91,7 +91,9 @@ export const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
       email: user.email || '',
       photoURL: user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`,
       stream: stream as Stream,
-      targetGrade: Object.values(subjectTargets).reduce((a, b) => a + b, 0) / subjects.length,
+      targetGrade: (Object.values(subjectTargets).length > 0 && subjects.length > 0) 
+        ? Object.values(subjectTargets).reduce((a, b) => a + b, 0) / subjects.length 
+        : 10,
       points: 100,
       badges: ['starter'],
       favorites: [],
@@ -109,9 +111,11 @@ export const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
 
     try {
       await setDoc(doc(db, 'users', user.uid), profile);
+      console.log("Profile saved successfully");
       onComplete(profile);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving profile:", error);
+      alert(lang === 'ar' ? 'حدث خطأ أثناء حفظ ملفك الشخصي. يرجى المحاولة مرة أخرى.' : 'Une erreur est survenue lors de l\'enregistrement de ton profil. Réessaie.');
     } finally {
       setLoading(false);
     }
