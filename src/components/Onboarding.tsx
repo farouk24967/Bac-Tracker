@@ -109,13 +109,25 @@ export const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
       aiAnalysis: analysis || undefined
     };
 
+    const savePromise = setDoc(doc(db, 'users', user.uid), profile);
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("TIMEOUT")), 8000)
+    );
+
     try {
-      await setDoc(doc(db, 'users', user.uid), profile);
+      await Promise.race([savePromise, timeoutPromise]);
       console.log("Profile saved successfully");
       onComplete(profile);
     } catch (error: any) {
       console.error("Error saving profile:", error);
-      alert(lang === 'ar' ? 'حدث خطأ أثناء حفظ ملفك الشخصي. يرجى المحاولة مرة أخرى.' : 'Une erreur est survenue lors de l\'enregistrement de ton profil. Réessaie.');
+      if (error.message === "TIMEOUT") {
+        const proceed = confirm("La sauvegarde prend du temps. Veux-tu essayer d'entrer dans le dashboard quand même ? (Tes données pourraient ne pas être sauvegardées)");
+        if (proceed) {
+          onComplete(profile);
+        }
+      } else {
+        alert(lang === 'ar' ? `خطأ: ${error.message}` : `Une erreur est survenue : ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }

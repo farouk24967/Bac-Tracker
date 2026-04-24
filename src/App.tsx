@@ -105,7 +105,8 @@ const App: React.FC = () => {
           setLoading(false);
         }, (error) => {
           console.error("Error with profile snapshot:", error);
-          handleFirestoreError(error, OperationType.GET, `users/${u.uid}`);
+          // Don't throw here to avoid infinite loading if the listener fails
+          setProfile(null);
           setLoading(false);
         });
       } else {
