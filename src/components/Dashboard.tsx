@@ -332,33 +332,57 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
   }, [userProfile.uid]);
 
   useEffect(() => {
-    const checkStreak = async () => {
+    const performDailyReset = async () => {
       const today = new Date().toISOString().split('T')[0];
+      const lastReset = userProfile.lastLoginDate;
       const lastActivity = userProfile.lastActivityDate;
       
-      if (lastActivity === today) return;
+      if (lastReset === today) return;
 
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-      if (lastActivity !== yesterdayStr && lastActivity !== undefined) {
-        // Reset streak if missed a day
-        await updateDoc(doc(db, 'users', userProfile.uid), {
-          currentStreak: 0
-        });
+      const updates: any = {
+        lastLoginDate: today
+      };
 
-        const inactiveMessages = {
-          fr: "Tu nous manques ! ⚠️ Reviens réviser pour ne pas perdre ton rythme.",
-          en: "We miss you! ⚠️ Come back to study so you don't lose your rhythm.",
-          ar: "نفتقدك! ⚠️ عد للمراجعة حتى لا تفقد إيقاعك.",
-          es: "¡Te extrañamos! ⚠️ Vuelve a estudiar para no perder tu ritmo."
-        };
-        await addNotification("Inactivité ⚠️", inactiveMessages[lang], 'warning');
+      // 1. Streak Reset Logic (Only if they haven't done a task since yesterday)
+      if (lastActivity !== today && lastActivity !== yesterdayStr && lastActivity !== undefined) {
+        updates.currentStreak = 0;
+        await addNotification(
+          lang === 'ar' ? "انقطعت السلسلة ⚠️" : "Série interrompue ⚠️", 
+          lang === 'ar' ? "لقد فاتك يوم! ابدأ سلسلة جديدة اليوم." : "Tu as manqué un jour ! Recommence une série aujourd'hui.", 
+          'warning'
+        );
       }
+
+      // 2. Daily Graph Reset (Subject Progress)
+      const progressDocs = await getDocs(query(collection(db, 'subjectProgress'), where('uid', '==', userProfile.uid)));
+      const progressBatch = progressDocs.docs.map(d => updateDoc(doc(db, 'subjectProgress', d.id), { progress: 0 }));
+      await Promise.all(progressBatch);
+
+      // 3. Tasks Reset (Uncheck all or clear completed)
+      const taskDocs = await getDocs(query(collection(db, 'tasks'), where('uid', '==', userProfile.uid)));
+      const taskBatch = taskDocs.docs.map(d => updateDoc(doc(db, 'tasks', d.id), { 
+        completed: false, 
+        progress: 0,
+        reminderNotified: false 
+      }));
+      await Promise.all(taskBatch);
+
+      // Apply updates to user profile
+      await updateDoc(doc(db, 'users', userProfile.uid), updates);
+
+      await addNotification(
+        lang === 'ar' ? "يوم جديد! ✨" : "Nouvelle journée ! ✨",
+        lang === 'ar' ? "تم إعادة ضبط المهام والرسوم البيانية ليوم جديد من النجاح." : "Les tâches et graphiques ont été réinitialisés pour une nouvelle journée de réussite.",
+        'success'
+      );
     };
-    checkStreak();
-  }, [userProfile.uid, userProfile.lastActivityDate]);
+
+    performDailyReset();
+  }, [userProfile.uid, userProfile.lastLoginDate]);
 
   const addNotification = async (title: string, message: string, type: 'info' | 'warning' | 'success' | 'task') => {
     await addDoc(collection(db, 'notifications'), {

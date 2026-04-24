@@ -14,6 +14,7 @@ export interface UserProfile {
   onboardingCompleted: boolean;
   currentStreak: number;
   lastActivityDate?: string;
+  lastLoginDate?: string;
   createdAt: string;
   language?: Language;
   passions?: string[];
