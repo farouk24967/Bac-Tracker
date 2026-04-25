@@ -2,7 +2,9 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { db } from "../firebase";
 import { collection, addDoc } from "firebase/firestore";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || 'AIzaSyCpvYN6oUVDNCA-f2uN1nT5BuwtpKCSvWc' });
+const ai = new GoogleGenAI({ 
+  apiKey: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCpvYN6oUVDNCA-f2uN1nT5BuwtpKCSvWc' 
+});
 
 export const generateStudyAdvice = async (stream: string, average: number, target: number, lang: string = 'fr') => {
   const languageNames: Record<string, string> = {
@@ -25,7 +27,7 @@ export const generateStudyAdvice = async (stream: string, average: number, targe
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: prompt,
     });
     return response.text;
@@ -110,7 +112,7 @@ export const chatWithAI = async (message: string, userProfile: any, chatHistory:
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: [
         { role: 'user', parts: [{ text: systemInstruction }] },
         ...chatHistory.map(h => ({ role: h.role, parts: h.parts })),
@@ -191,7 +193,7 @@ export const analyzePerformance = async (userProfile: any, progress: any[]) => {
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: prompt,
     });
     return response.text;
@@ -237,7 +239,7 @@ export const generateFlashcards = async (topic: string, stream: string, lang: st
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: contents,
     });
     return response.text;
@@ -280,7 +282,7 @@ export const generateModernSummary = async (topic: string, stream: string, lang:
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: contents,
     });
     return response.text;
@@ -345,7 +347,7 @@ export const generateStudySchedule = async (tasks: any[], goals: any[], userProf
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: prompt,
     });
     
@@ -388,7 +390,7 @@ export const generateDailyReport = async (userProfile: any, activities: any[], l
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: prompt,
     });
     return response.text;

@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 
 // Initialize the Gemini AI with the API Key from environment variables
+// Note: In a Vite app, use import.meta.env.VITE_GEMINI_API_KEY
 const ai = new GoogleGenAI({ 
   apiKey: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCpvYN6oUVDNCA-f2uN1nT5BuwtpKCSvWc' 
 });
@@ -18,9 +19,11 @@ export async function getRecommendations(grades: any[], subjects: any[]) {
   `;
 
   try {
-    const model = ai.getGenerativeModel({ model: MODEL_NAME });
-    const response = await model.generateContent(prompt);
-    return response.text;
+    const response = await ai.models.generateContent({
+      model: MODEL_NAME,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }]
+    });
+    return response.text || 'Unable to generate recommendations at this time.';
   } catch (error) {
     console.error('Error getting recommendations:', error);
     return 'Unable to generate recommendations at this time.';
@@ -29,17 +32,24 @@ export async function getRecommendations(grades: any[], subjects: any[]) {
 
 export async function analyzeImage(imageBase64: string, mimeType: string, prompt: string) {
   try {
-    const model = ai.getGenerativeModel({ model: MODEL_NAME });
-    const response = await model.generateContent([
-      {
-        inlineData: {
-          data: imageBase64,
-          mimeType: mimeType,
-        },
-      },
-      prompt
-    ]);
-    return response.text;
+    const response = await ai.models.generateContent({
+      model: MODEL_NAME,
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                data: imageBase64,
+                mimeType: mimeType,
+              },
+            }
+          ]
+        }
+      ]
+    });
+    return response.text || 'Unable to analyze image at this time.';
   } catch (error) {
     console.error('Error analyzing image:', error);
     return 'Unable to analyze image at this time.';
@@ -48,14 +58,15 @@ export async function analyzeImage(imageBase64: string, mimeType: string, prompt
 
 export async function chatWithGemini(prompt: string) {
   try {
-    const model = ai.getGenerativeModel({ 
+    const response = await ai.models.generateContent({ 
       model: MODEL_NAME,
-      systemInstruction: "You are an AI tutor helping an Algerian BAC student. Be encouraging, concise, and helpful in French. You can help with math, physics, languages, and study tips."
+      systemInstruction: "You are an AI tutor helping an Algerian BAC student. Be encouraging, concise, and helpful in French. You can help with math, physics, languages, and study tips.",
+      contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
-    const response = await model.generateContent(prompt);
-    return response.text;
+    return response.text || 'Désolé, j\'ai du mal à me connecter en ce moment.';
   } catch (error) {
     console.error('Error chatting with Gemini:', error);
     return 'Désolé, j\'ai du mal à me connecter en ce moment.';
   }
 }
+
