@@ -783,7 +783,7 @@ const GradeManager: React.FC<{ userProfile: UserProfile, lang: Language, stream:
 
       const newAverage = totalCoeffs > 0 ? totalWeightedGrade / totalCoeffs : 0;
 
-      await updateDoc(doc(db, 'users', userProfile.uid), {
+      await updateDoc(doc(db, 'users', userProfile.email), {
         currentGrades: localGrades,
         currentAverage: newAverage
       });

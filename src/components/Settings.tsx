@@ -15,7 +15,7 @@ export const Settings: React.FC<SettingsProps> = ({ userProfile }) => {
   const settings = userProfile.motivationSettings || { enabled: true, type: 'both' };
 
   const updateMotivation = async (updates: any) => {
-    await updateDoc(doc(db, 'users', userProfile.uid), {
+    await updateDoc(doc(db, 'users', userProfile.email), {
       motivationSettings: { ...settings, ...updates }
     });
   };
@@ -147,7 +147,7 @@ export const Settings: React.FC<SettingsProps> = ({ userProfile }) => {
 
                 const updateTheme = async (theme: 'indigo' | 'emerald' | 'rose') => {
                   try {
-                    await updateDoc(doc(db, 'users', userProfile.uid), { theme });
+                    await updateDoc(doc(db, 'users', userProfile.email), { theme });
                   } catch (error) {
                     console.error("Error updating theme:", error);
                   }

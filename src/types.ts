@@ -35,6 +35,8 @@ export interface UserProfile {
   theme?: 'indigo' | 'emerald' | 'rose';
   favorites?: string[];
   title?: string;
+  paid?: boolean;
+  status?: "inactive" | "pending" | "active";
 }
 
 export interface Task {

@@ -86,13 +86,30 @@ const App: React.FC = () => {
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (u) => {
       setUser(u);
-      if (u) {
-        const docRef = doc(db, 'users', u.uid);
+        if (!u.email) {
+          console.error("User has no email, cannot verify payment status");
+          setProfile(null);
+          setLoading(false);
+          return;
+        }
+
+        const docRef = doc(db, 'users', u.email);
         
-        // Listen for profile changes (even if it doesn't exist yet)
+        // Listen for profile changes
         unsubscribeProfile = onSnapshot(docRef, (snap) => {
           if (snap.exists()) {
             const profileData = snap.data() as UserProfile;
+            
+            // PAYMENT CONTROL
+            if (!profileData.paid || profileData.status !== 'active') {
+              console.log("Payment required or account inactive");
+              window.open("https://wa.me/213663507795?text=Bonjour%20je%20veux%20acheter%20l'accès%20à%20Bac%20Tracker", '_blank');
+              auth.signOut();
+              setProfile(null);
+              setLoading(false);
+              return;
+            }
+
             setProfile(profileData);
 
             // Ensure user has a title based on XP
@@ -100,12 +117,15 @@ const App: React.FC = () => {
               checkXPProgression(profileData, profileData.points || 0);
             }
           } else {
+            // CAS 1 : Document n’existe pas
+            console.log("No user document found, redirecting to payment");
+            window.open("https://wa.me/213663507795?text=Bonjour%20je%20veux%20acheter%20l'accès%20à%20Bac%20Tracker", '_blank');
+            auth.signOut();
             setProfile(null);
           }
           setLoading(false);
         }, (error) => {
           console.error("Error with profile snapshot:", error);
-          // Don't throw here to avoid infinite loading if the listener fails
           setProfile(null);
           setLoading(false);
         });
@@ -168,9 +188,9 @@ const App: React.FC = () => {
     );
   }
 
-  if (!user) return <Auth />;
+  if (!user || (user && !profile && !loading)) return <Auth />;
 
-  if (user && !profile?.onboardingCompleted) {
+  if (user && profile && !profile.onboardingCompleted) {
     return (
       <ErrorBoundary>
         <Onboarding user={user} onComplete={setProfile} />

@@ -90,7 +90,7 @@ export const checkBadges = async (userProfile: UserProfile, context: {
   }
 
   if (newBadges.length > 0) {
-    const userRef = doc(db, 'users', userProfile.uid);
+    const userRef = doc(db, 'users', userProfile.email);
     let extraPoints = 0;
     newBadges.forEach(id => {
       const def = BADGE_DEFINITIONS.find(b => b.id === id);
@@ -114,7 +114,7 @@ export const checkXPProgression = async (userProfile: UserProfile, newTotalPoint
   const reachedMilestone = [...XP_MILESTONES].reverse().find(m => newTotalPoints >= m.xp);
   
   if (reachedMilestone && reachedMilestone.title['fr'] !== currentTitle) {
-     const userRef = doc(db, 'users', userProfile.uid);
+     const userRef = doc(db, 'users', userProfile.email);
      await updateDoc(userRef, {
        title: reachedMilestone.title['fr'] // Use FR as internal key if needed, or better, store the ID
      });
@@ -151,7 +151,7 @@ export const updateStreak = async (userProfile: UserProfile) => {
     console.log('[Streak] Streak broken or first day. Resetting to 1.');
   }
 
-  const userRef = doc(db, 'users', userProfile.uid);
+  const userRef = doc(db, 'users', userProfile.email);
   
   // Calculate bonus points based on streak length
   const basePoints = 20;

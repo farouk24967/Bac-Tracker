@@ -98,7 +98,7 @@ export const StudySession: React.FC<StudySessionProps> = ({ userProfile, onStrea
       }
 
       try {
-        await updateDoc(doc(db, 'users', userProfile.uid), updates);
+        await updateDoc(doc(db, 'users', userProfile.email), updates);
 
         // Save study session for analytics
         await addDoc(collection(db, 'studySessions'), {

@@ -372,7 +372,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
       await Promise.all(taskBatch);
 
       // Apply updates to user profile
-      await updateDoc(doc(db, 'users', userProfile.uid), updates);
+      await updateDoc(doc(db, 'users', userProfile.email), updates);
 
       await addNotification(
         lang === 'ar' ? "يوم جديد! ✨" : "Nouvelle journée ! ✨",
@@ -438,7 +438,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
     // Add to activity log (Memory)
     if (isCompleted) {
       const pointsEarned = 10;
-      await updateDoc(doc(db, 'users', userProfile.uid), {
+      await updateDoc(doc(db, 'users', userProfile.email), {
         points: userProfile.points + pointsEarned
       });
 
@@ -1758,7 +1758,7 @@ const PomodoroModule: React.FC<{
         onStreakUpdate();
       }
 
-      await updateDoc(doc(db, 'users', userProfile.uid), updates);
+      await updateDoc(doc(db, 'users', userProfile.email), updates);
       
       // Award "focused" badge for first session
       await checkBadges(userProfile, { action: 'session_finished' });
