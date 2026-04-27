@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { GoogleGenAI, Type } from "@google/genai";
 import { db } from "../firebase";
 import { collection, addDoc } from "firebase/firestore";
@@ -30,7 +31,7 @@ export const generateStudyAdvice = async (stream: string, average: number, targe
       model: "gemini-2.0-flash",
       contents: prompt,
     });
-    return response.text;
+    return response.candidates?.[0]?.content?.parts?.[0]?.text || "";
   } catch (error) {
     console.error("Error generating study advice:", error);
     return lang === 'ar' ? "عذراً، لم أتمكن من إنشاء النصائح في الوقت الحالي. حاول مرة أخرى لاحقاً!" : "Désolé, je n'ai pas pu générer de conseils pour le moment. Réessaie plus tard !";
@@ -114,17 +115,22 @@ export const chatWithAI = async (message: string, userProfile: any, chatHistory:
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash",
       contents: [
-        { role: 'user', parts: [{ text: systemInstruction }] },
         ...chatHistory.map(h => ({ role: h.role, parts: h.parts })),
         { role: 'user', parts: [{ text: message }] }
       ],
-      tools: [{ functionDeclarations }]
+      config: {
+        systemInstruction,
+        tools: [{ functionDeclarations }]
+      }
     });
 
-    if (response.functionCalls && response.functionCalls.length > 0) {
+    const calls = response.candidates?.[0]?.content?.parts?.filter(p => p.functionCall);
+    
+    if (calls && calls.length > 0) {
       const successMessages = [];
       
-      for (const call of response.functionCalls) {
+      for (const part of calls) {
+        const call = part.functionCall!;
         if (call.name === "addTaskToDashboard") {
           const args = call.args as any;
           await addDoc(collection(db, 'tasks'), {
@@ -155,11 +161,11 @@ export const chatWithAI = async (message: string, userProfile: any, chatHistory:
         }
       }
       
-      const text = response.text || "";
+      const text = response.candidates?.[0]?.content?.parts?.[0]?.text || "";
       return text + (text ? "\n\n" : "") + successMessages.join("\n");
     }
 
-    return response.text;
+    return response.candidates?.[0]?.content?.parts?.[0]?.text || "";
   } catch (error) {
     console.error("Error in AI chat:", error);
     return lang === 'ar' ? "عذراً، واجهت مشكلة تقنية صغيرة. هل يمكنك إعادة صياغة سؤالك؟" : "Oups, j'ai eu un petit problème technique. Peux-tu reformuler ta question ?";
@@ -196,7 +202,7 @@ export const analyzePerformance = async (userProfile: any, progress: any[]) => {
       model: "gemini-2.0-flash",
       contents: prompt,
     });
-    return response.text;
+    return response.candidates?.[0]?.content?.parts?.[0]?.text || "";
   } catch (error) {
     console.error("Error analyzing performance:", error);
     return lang === 'ar' ? "خطأ أثناء تحليل الأداء." : "Erreur lors de l'analyse des performances.";
@@ -242,7 +248,7 @@ export const generateFlashcards = async (topic: string, stream: string, lang: st
       model: "gemini-2.0-flash",
       contents: contents,
     });
-    return response.text;
+    return response.candidates?.[0]?.content?.parts?.[0]?.text || "";
   } catch (error) {
     console.error("Error generating flashcards:", error);
     return lang === 'ar' ? "خطأ أثناء إنشاء بطاقات المراجعة." : "Erreur lors de la génération des flashcards.";
@@ -285,7 +291,7 @@ export const generateModernSummary = async (topic: string, stream: string, lang:
       model: "gemini-2.0-flash",
       contents: contents,
     });
-    return response.text;
+    return response.candidates?.[0]?.content?.parts?.[0]?.text || "";
   } catch (error) {
     console.error("Error generating summary:", error);
     return lang === 'ar' ? "خطأ أثناء إنشاء الملخص." : "Erreur lors de la génération du résumé.";
@@ -351,7 +357,7 @@ export const generateStudySchedule = async (tasks: any[], goals: any[], userProf
       contents: prompt,
     });
     
-    let text = response.text || "[]";
+    let text = response.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
     // Clean up potential markdown formatting
     text = text.replace(/```json/g, '').replace(/```/g, '').trim();
     
@@ -393,7 +399,7 @@ export const generateDailyReport = async (userProfile: any, activities: any[], l
       model: "gemini-2.0-flash",
       contents: prompt,
     });
-    return response.text;
+    return response.candidates?.[0]?.content?.parts?.[0]?.text || "";
   } catch (error) {
     console.error("Error generating daily report:", error);
     return lang === 'ar' ? "خطأ أثناء إنشاء التقرير اليومي." : "Erreur lors de la génération du rapport quotidien.";
