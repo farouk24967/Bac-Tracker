@@ -86,6 +86,7 @@ const App: React.FC = () => {
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (u) => {
       setUser(u);
+      if (u) {
         if (!u.email) {
           console.error("User has no email, cannot verify payment status");
           setProfile(null);
