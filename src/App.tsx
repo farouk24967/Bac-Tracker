@@ -15,6 +15,7 @@ import { AverageCalculator } from './components/AverageCalculator';
 import { Gamification } from './components/Gamification';
 import { Settings } from './components/Settings';
 import { Analytics } from './components/Analytics';
+import { AdminPanel } from './components/AdminPanel';
 import { MemoryBadge } from './components/MemoryBadge';
 import { useAutoStudyTime } from './hooks/useAutoStudyTime';
 import { DailyMotivation } from './components/DailyMotivation';
@@ -39,7 +40,9 @@ import {
   Trophy,
   Settings as SettingsIcon,
   BarChart3,
-  Home
+  BarChart3,
+  Home,
+  ShieldCheck
 } from 'lucide-react';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
@@ -71,6 +74,7 @@ const App: React.FC = () => {
       case 'gamification': return { label: t.gamification, icon: Trophy };
       case 'analytics': return { label: lang === 'ar' ? 'التحليلات' : 'Analytics', icon: BarChart3 };
       case 'settings': return { label: lang === 'ar' ? 'الإعدادات' : 'Paramètres', icon: SettingsIcon };
+      case 'admin': return { label: 'Admin', icon: ShieldCheck };
       default: return { label: t.dashboard, icon: LayoutDashboard };
     }
   };
@@ -330,6 +334,7 @@ const App: React.FC = () => {
             {activeTab === 'gamification' && <Gamification userProfile={profile!} />}
             {activeTab === 'analytics' && <Analytics userProfile={profile!} />}
             {activeTab === 'settings' && <Settings userProfile={profile!} />}
+            {activeTab === 'admin' && <AdminPanel adminProfile={profile!} />}
           </motion.div>
         </AnimatePresence>
         </ErrorBoundary>

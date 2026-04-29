@@ -107,8 +107,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
       discoverySource: source,
       subjectTargets,
       aiAnalysis: analysis || undefined,
-      paid: true, // If they are here, they must have paid
-      status: "active"
+      paid: user.email === 'bouayedfarouk63@gmail.com',
+      status: user.email === 'bouayedfarouk63@gmail.com' ? "active" : "pending"
     };
 
     const savePromise = setDoc(doc(db, 'users', user.uid), profile);

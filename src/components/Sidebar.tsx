@@ -15,7 +15,8 @@ import {
   Calendar,
   Calculator,
   Settings as SettingsIcon,
-  BarChart3
+  BarChart3,
+  ShieldCheck
 } from 'lucide-react';
 import { logout, db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -48,6 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userP
     { id: 'gamification', label: t.gamification, icon: Trophy },
     { id: 'analytics', label: lang === 'ar' ? 'التحليلات' : 'Analytics', icon: BarChart3 },
     { id: 'settings', label: lang === 'ar' ? 'الإعدادات' : 'Paramètres', icon: SettingsIcon },
+    ...(userProfile.email === 'bouayedfarouk63@gmail.com' ? [{ id: 'admin', label: 'Admin', icon: ShieldCheck }] : []),
   ];
 
   const mobileBottomItems = [
