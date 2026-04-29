@@ -104,6 +104,7 @@ const App: React.FC = () => {
         unsubscribeProfile = onSnapshot(docRef, (snap) => {
           if (snap.exists()) {
             const profileData = snap.data() as UserProfile;
+            console.log("[App] Profile found:", profileData.email, "| Paid:", profileData.paid, "| Status:", profileData.status);
             setProfile(profileData);
 
             // Ensure user has a title based on XP
@@ -177,7 +178,9 @@ const App: React.FC = () => {
   }
 
   // Case: Profile exists but payment is missing or account is inactive
-  if (profile && (!profile.paid || profile.status !== 'active')) {
+  // We allow the admin email to bypass this check to avoid lockouts
+  const isAdminEmail = user.email?.toLowerCase().trim() === 'bouayedfarouk63@gmail.com';
+  if (profile && (!profile.paid || profile.status !== 'active') && !isAdminEmail) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
         <div className="max-w-md w-full bg-white rounded-[32px] p-10 shadow-xl border border-slate-100 text-center">
