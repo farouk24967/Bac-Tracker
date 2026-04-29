@@ -19,8 +19,8 @@ service cloud.firestore {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    function isOwner(id) {
+      return isSignedIn() && (request.auth.uid == id || request.auth.token.email == id);
     }
 
     function incoming() {
@@ -58,10 +58,10 @@ service cloud.firestore {
     // Collection Rules
     // ===============================================================
 
-    match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId) && isValidUser(incoming());
-      allow update: if isOwner(userId) && isValidUser(incoming()) && (
+    match /users/{userKey} {
+      allow read: if isOwner(userKey) || (isSignedIn() && resource.data.uid == request.auth.uid) || isAdmin();
+      allow create: if (isOwner(userKey) || (isSignedIn() && incoming().uid == request.auth.uid)) && isValidUser(incoming());
+      allow update: if (isOwner(userKey) || (isSignedIn() && existing().uid == request.auth.uid)) && isValidUser(incoming()) && (
         // Prevent role escalation if role existed
         (!('role' in existing()) || incoming().get('role', '') == existing().role)
         || isAdmin()

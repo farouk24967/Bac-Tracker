@@ -100,28 +100,15 @@ const App: React.FC = () => {
         unsubscribeProfile = onSnapshot(docRef, (snap) => {
           if (snap.exists()) {
             const profileData = snap.data() as UserProfile;
-            
-            // PAYMENT CONTROL
-            if (!profileData.paid || profileData.status !== 'active') {
-              console.log("Payment required or account inactive");
-              window.open("https://wa.me/213663507795?text=Bonjour%20je%20veux%20acheter%20l'accès%20à%20Bac%20Tracker", '_blank');
-              auth.signOut();
-              setProfile(null);
-              setLoading(false);
-              return;
-            }
-
             setProfile(profileData);
 
             // Ensure user has a title based on XP
-            if (!profileData.title) {
+            if (profileData.paid && profileData.status === 'active' && !profileData.title) {
               checkXPProgression(profileData, profileData.points || 0);
             }
           } else {
-            // CAS 1 : Document n’existe pas
-            console.log("No user document found, redirecting to payment");
-            window.open("https://wa.me/213663507795?text=Bonjour%20je%20veux%20acheter%20l'accès%20à%20Bac%20Tracker", '_blank');
-            auth.signOut();
+            // CAS 1 : Document n’existe pas (New User)
+            console.log("No user document found, user should go to onboarding");
             setProfile(null);
           }
           setLoading(false);
@@ -154,6 +141,8 @@ const App: React.FC = () => {
     }
   }, [profile?.theme]);
 
+  if (!user) return <Auth key="logged-out" />;
+  
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
@@ -167,31 +156,58 @@ const App: React.FC = () => {
               src="/logo.png" 
               alt="Bac Tracker Logo" 
               className="w-32 h-32 object-contain"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
-              }}
             />
             <div className="fallback-icon hidden bg-primary-600 p-6 rounded-3xl shadow-xl">
               <GraduationCap className="w-16 h-16 text-white" />
             </div>
         </motion.div>
-        
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-          className="mb-4"
-        >
-          <Loader2 className="w-8 h-8 text-primary-600" />
-        </motion.div>
-        <p className="text-slate-500 font-medium animate-pulse">Chargement de ton univers Bac Tracker...</p>
+        <Loader2 className="w-8 h-8 text-primary-600 animate-spin mb-4" />
+        <p className="text-slate-500 font-medium animate-pulse">Vérification de ton accès...</p>
       </div>
     );
   }
 
-  if (!user || (user && !profile && !loading)) return <Auth />;
+  // Case: User is logged in but has no profile yet (New User)
+  if (user && !profile) {
+    return <Onboarding user={user} onComplete={setProfile} />;
+  }
 
-  if (user && profile && !profile.onboardingCompleted) {
+  // Case: Profile exists but payment is missing or account is inactive
+  if (profile && (!profile.paid || profile.status !== 'active')) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+        <div className="max-w-md w-full bg-white rounded-[32px] p-10 shadow-xl border border-slate-100 text-center">
+          <div className="w-20 h-20 bg-amber-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
+            <GraduationCap className="w-10 h-10 text-amber-600" />
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 mb-4">Accès Restreint</h2>
+          <p className="text-slate-500 mb-8 font-medium">
+            Ton compte n'est pas encore actif ou l'accès n'a pas été payé. 
+            Contacte l'administrateur pour activer ton accès à Bac Tracker.
+          </p>
+          <div className="space-y-3">
+            <a 
+              href="https://wa.me/213663507795?text=Bonjour%20je%20veux%20acheter%20l'accès%20à%20Bac%20Tracker"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-slate-800 transition-all"
+            >
+              Contacter sur WhatsApp
+            </a>
+            <button 
+              onClick={() => auth.signOut()}
+              className="w-full text-slate-400 font-bold py-2 hover:text-slate-600 transition-all text-sm"
+            >
+              Se déconnecter
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Case: Profile exists but onboarding is not completed
+  if (profile && !profile.onboardingCompleted) {
     return (
       <ErrorBoundary>
         <Onboarding user={user} onComplete={setProfile} />
