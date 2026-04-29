@@ -58,7 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userP
   ];
 
   const changeLanguage = async (newLang: Language) => {
-    await updateDoc(doc(db, 'users', userProfile.email), {
+    await updateDoc(doc(db, 'users', userProfile.uid), {
       language: newLang
     });
   };
@@ -103,7 +103,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userP
           
           const base64Image = canvas.toDataURL('image/jpeg', 0.8);
 
-          await updateDoc(doc(db, 'users', userProfile.email), {
+          await updateDoc(doc(db, 'users', userProfile.uid), {
             photoURL: base64Image
           });
           setIsUploading(false);

@@ -358,7 +358,7 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
     
     setLocalFavorites(updatedFavorites);
 
-    const userRef = doc(db, 'users', userProfile.email);
+    const userRef = doc(db, 'users', userProfile.uid);
     const path = `users/${userProfile.uid}`;
 
     try {

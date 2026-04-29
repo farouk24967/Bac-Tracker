@@ -372,7 +372,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
       await Promise.all(taskBatch);
 
       // Apply updates to user profile
-      await updateDoc(doc(db, 'users', userProfile.email), updates);
+      await updateDoc(doc(db, 'users', userProfile.uid), updates);
 
       await addNotification(
         lang === 'ar' ? "يوم جديد! ✨" : "Nouvelle journée ! ✨",
@@ -438,7 +438,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
     // Add to activity log (Memory)
     if (isCompleted) {
       const pointsEarned = 10;
-      await updateDoc(doc(db, 'users', userProfile.email), {
+      await updateDoc(doc(db, 'users', userProfile.uid), {
         points: userProfile.points + pointsEarned
       });
 

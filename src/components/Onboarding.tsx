@@ -111,7 +111,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
       status: "active"
     };
 
-    const savePromise = setDoc(doc(db, 'users', user.email), profile);
+    const savePromise = setDoc(doc(db, 'users', user.uid), profile);
     const timeoutPromise = new Promise((_, reject) => 
       setTimeout(() => reject(new Error("TIMEOUT")), 8000)
     );

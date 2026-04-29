@@ -94,7 +94,7 @@ const App: React.FC = () => {
           return;
         }
 
-        const docRef = doc(db, 'users', u.email);
+        const docRef = doc(db, 'users', u.uid);
         
         // Listen for profile changes
         unsubscribeProfile = onSnapshot(docRef, (snap) => {

@@ -186,7 +186,7 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
         const pointsEarned = 25;
 
         // Update user points
-        const userRef = doc(db, 'users', userProfile.email);
+        const userRef = doc(db, 'users', userProfile.uid);
         await updateDoc(userRef, {
           points: userProfile.points + pointsEarned
         });
