@@ -47,7 +47,184 @@ import { generateDailyReport } from '../services/geminiService';
 import Markdown from 'react-markdown';
 import { ActivityHeatmap } from './ActivityHeatmap';
 
+// --- Sub-components moved to top to avoid ReferenceErrors ---
 
+const GradeManager: React.FC<{ userProfile: UserProfile, lang: Language, stream: string, subjects: string[] }> = ({ userProfile, lang, stream, subjects }) => {
+  const [localGrades, setLocalGrades] = useState<Record<string, number>>(userProfile.currentGrades || {});
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      // Calculate weighted average
+      const streamCoeffs = COEFFICIENTS[stream] || {};
+      let totalWeightedGrade = 0;
+      let totalCoeffs = 0;
+      
+      subjects.forEach(s => {
+        if (localGrades[s] !== undefined && localGrades[s] !== null) {
+          const coeff = streamCoeffs[s] || 1;
+          totalWeightedGrade += localGrades[s] * coeff;
+          totalCoeffs += coeff;
+        }
+      });
+
+      const newAverage = totalCoeffs > 0 ? totalWeightedGrade / totalCoeffs : 0;
+
+      await updateDoc(doc(db, 'users', userProfile.uid), {
+        currentGrades: localGrades,
+        currentAverage: newAverage
+      });
+      setIsSaving(false);
+    } catch (error) {
+      console.error("Error saving grades:", error);
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
+        <div className="flex items-center gap-4">
+          <div className="bg-rose-50 p-3 rounded-2xl text-rose-600">
+            <PenLine className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-xl font-black text-slate-900">
+              {lang === 'ar' ? "نقاطي (معدلات المواد)" : "Mes Notes (Moyennes)"}
+            </h3>
+            <p className="text-slate-500 text-sm">
+              {lang === 'ar' ? "أدخل نقاطك في كل مادة لحساب معدلك العام." : "Saisis tes notes pour affiner tes analyses."}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="flex items-center justify-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-slate-800 transition-all disabled:opacity-50 shadow-xl"
+        >
+          {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          {lang === 'ar' ? "حفظ النقاط" : "Enregistrer les notes"}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {subjects.map(subject => {
+          const coeff = (COEFFICIENTS[stream] || {})[subject] || 1;
+          return (
+            <div key={subject} className="p-5 rounded-3xl bg-slate-50 border border-slate-100 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-700 text-sm" dir="rtl">{subject}</span>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Coeff: {coeff}</span>
+              </div>
+              <div className="relative">
+                <input
+                  type="number"
+                  min="0"
+                  max="20"
+                  step="0.01"
+                  value={localGrades[subject] || ''}
+                  onChange={(e) => setLocalGrades({ ...localGrades, [subject]: parseFloat(e.target.value) })}
+                  className="w-full bg-white border border-slate-100 rounded-2xl px-4 py-3 font-bold text-slate-900 outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+                  placeholder="0.00"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-300">/ 20</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+};
+
+const ActivityMemory: React.FC<{ userProfile: UserProfile, lang: Language }> = ({ userProfile, lang }) => {
+  const [logs, setLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    const path = 'activityLog';
+    const q = query(
+      collection(db, path), 
+      where('uid', '==', userProfile.uid),
+      orderBy('timestamp', 'desc'),
+      limit(10)
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setLogs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, path);
+    });
+    return () => unsubscribe();
+  }, [userProfile.uid]);
+
+  const today = new Date();
+  const dateStr = today.toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'fr-FR', { 
+    weekday: 'long', 
+    day: 'numeric', 
+    month: 'long' 
+  });
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100"
+    >
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="bg-emerald-50 p-3 rounded-2xl text-emerald-600">
+            <History className="w-6 h-6" />
+          </div>
+          <h3 className="text-xl font-black text-slate-900">{lang === 'ar' ? "ذاكرة الأنشطة" : "Mémoire des Activités"}</h3>
+        </div>
+        <span className="text-xs font-bold text-slate-400">{dateStr}</span>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {logs.length > 0 ? logs.map(log => (
+          <div key={log.id} className="flex items-start gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+            <div className="bg-white p-2 rounded-xl shadow-sm mt-1">
+              {log.type === 'task_completed' ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              ) : (
+                <Clock className="w-4 h-4 text-primary-600" />
+              )}
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-800 leading-tight">
+                {log.type === 'task_completed' 
+                  ? (lang === 'ar' ? `أكملت: ${log.title}` : `Terminé : ${log.title}`)
+                  : log.title
+                }
+              </p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{log.subject}</span>
+                <span className="text-[10px] text-slate-300">•</span>
+                <span className="text-[10px] text-emerald-600 font-bold">
+                  +{log.xpEarned || 0} XP
+                </span>
+                <span className="text-[10px] text-slate-300">•</span>
+                <span className="text-[10px] text-slate-400">
+                  {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+            </div>
+          </div>
+        )) : (
+          <div className="col-span-2 text-center py-12">
+            <p className="text-slate-400 font-medium italic">Aucun souvenir enregistré.</p>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
+// --- End of Sub-components ---
 interface AnalyticsProps {
   userProfile: UserProfile;
 }
@@ -768,177 +945,3 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
   );
 };
 
-const GradeManager: React.FC<{ userProfile: UserProfile, lang: Language, stream: string, subjects: string[] }> = ({ userProfile, lang, stream, subjects }) => {
-  const [localGrades, setLocalGrades] = useState<Record<string, number>>(userProfile.currentGrades || {});
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      // Calculate weighted average
-      const streamCoeffs = COEFFICIENTS[stream] || {};
-      let totalWeightedGrade = 0;
-      let totalCoeffs = 0;
-      
-      subjects.forEach(s => {
-        if (localGrades[s] !== undefined && localGrades[s] !== null) {
-          const coeff = streamCoeffs[s] || 1;
-          totalWeightedGrade += localGrades[s] * coeff;
-          totalCoeffs += coeff;
-        }
-      });
-
-      const newAverage = totalCoeffs > 0 ? totalWeightedGrade / totalCoeffs : 0;
-
-      await updateDoc(doc(db, 'users', userProfile.uid), {
-        currentGrades: localGrades,
-        currentAverage: newAverage
-      });
-      setIsSaving(false);
-    } catch (error) {
-      console.error("Error saving grades:", error);
-      setIsSaving(false);
-    }
-  };
-
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100"
-    >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
-        <div className="flex items-center gap-4">
-          <div className="bg-rose-50 p-3 rounded-2xl text-rose-600">
-            <PenLine className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="text-xl font-black text-slate-900">
-              {lang === 'ar' ? "نقاطي (معدلات المواد)" : "Mes Notes (Moyennes)"}
-            </h3>
-            <p className="text-slate-500 text-sm">
-              {lang === 'ar' ? "أدخل نقاطك في كل مادة لحساب معدلك العام." : "Saisis tes notes pour affiner tes analyses."}
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="flex items-center justify-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-slate-800 transition-all disabled:opacity-50 shadow-xl"
-        >
-          {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          {lang === 'ar' ? "حفظ النقاط" : "Enregistrer les notes"}
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {subjects.map(subject => {
-          const coeff = (COEFFICIENTS[stream] || {})[subject] || 1;
-          return (
-            <div key={subject} className="p-5 rounded-3xl bg-slate-50 border border-slate-100 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-700 text-sm" dir="rtl">{subject}</span>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Coeff: {coeff}</span>
-              </div>
-              <div className="relative">
-                <input
-                  type="number"
-                  min="0"
-                  max="20"
-                  step="0.01"
-                  value={localGrades[subject] || ''}
-                  onChange={(e) => setLocalGrades({ ...localGrades, [subject]: parseFloat(e.target.value) })}
-                  className="w-full bg-white border border-slate-100 rounded-2xl px-4 py-3 font-bold text-slate-900 outline-none focus:ring-2 focus:ring-primary-500 transition-all"
-                  placeholder="0.00"
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-300">/ 20</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </motion.div>
-  );
-};
-
-const ActivityMemory: React.FC<{ userProfile: UserProfile, lang: Language }> = ({ userProfile, lang }) => {
-  const [logs, setLogs] = useState<any[]>([]);
-
-  useEffect(() => {
-    const path = 'activityLog';
-    const q = query(
-      collection(db, path), 
-      where('uid', '==', userProfile.uid),
-      orderBy('timestamp', 'desc'),
-      limit(10)
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setLogs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    }, (error) => {
-      handleFirestoreError(error, OperationType.GET, path);
-    });
-    return () => unsubscribe();
-  }, [userProfile.uid]);
-
-  const today = new Date();
-  const dateStr = today.toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'fr-FR', { 
-    weekday: 'long', 
-    day: 'numeric', 
-    month: 'long' 
-  });
-
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100"
-    >
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <div className="bg-emerald-50 p-3 rounded-2xl text-emerald-600">
-            <History className="w-6 h-6" />
-          </div>
-          <h3 className="text-xl font-black text-slate-900">{lang === 'ar' ? "ذاكرة الأنشطة" : "Mémoire des Activités"}</h3>
-        </div>
-        <span className="text-xs font-bold text-slate-400">{dateStr}</span>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {logs.length > 0 ? logs.map(log => (
-          <div key={log.id} className="flex items-start gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-            <div className="bg-white p-2 rounded-xl shadow-sm mt-1">
-              {log.type === 'task_completed' ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              ) : (
-                <Clock className="w-4 h-4 text-primary-600" />
-              )}
-            </div>
-            <div>
-              <p className="text-sm font-bold text-slate-800 leading-tight">
-                {log.type === 'task_completed' 
-                  ? (lang === 'ar' ? `أكملت: ${log.title}` : `Terminé : ${log.title}`)
-                  : log.title
-                }
-              </p>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{log.subject}</span>
-                <span className="text-[10px] text-slate-300">•</span>
-                <span className="text-[10px] text-emerald-600 font-bold">
-                  +{log.xpEarned || 0} XP
-                </span>
-                <span className="text-[10px] text-slate-300">•</span>
-                <span className="text-[10px] text-slate-400">
-                  {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
-              </div>
-            </div>
-          </div>
-        )) : (
-          <div className="col-span-2 text-center py-12">
-            <p className="text-slate-400 font-medium italic">Aucun souvenir enregistré.</p>
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
-};

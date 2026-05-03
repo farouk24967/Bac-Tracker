@@ -40,10 +40,10 @@ import {
   Trophy,
   Settings as SettingsIcon,
   BarChart3,
-  BarChart3,
   Home,
   ShieldCheck
 } from 'lucide-react';
+
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 const App: React.FC = () => {

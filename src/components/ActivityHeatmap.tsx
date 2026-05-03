@@ -35,8 +35,10 @@ interface ActivityHeatmapProps {
 
 export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ sessions, lang, userProfile }) => {
 
+  const today = startOfToday();
   const [viewMode, setViewMode] = React.useState<'all' | 'month' | 'week'>('all');
-  const [currentDate, setCurrentDate] = React.useState(startOfToday());
+  const [currentDate, setCurrentDate] = React.useState(today);
+
 
   const days = useMemo(() => {
     let start: Date;
@@ -164,7 +166,8 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ sessions, lang
   let currentWeek: Date[] = [];
   
   // Align start to the beginning of the week (Sunday = 0)
-  const firstDayOffset = getDay(days[0]);
+  const firstDayOffset = days.length > 0 ? getDay(days[0]) : 0;
+
   for (let i = 0; i < firstDayOffset; i++) {
     currentWeek.push(null as any);
   }
@@ -204,8 +207,9 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ sessions, lang
             <h3 className="text-2xl font-black text-slate-900 tracking-tight">
               {viewMode === 'all' ? t.title : 
                viewMode === 'month' ? format(currentDate, 'MMMM yyyy', { locale: lang === 'ar' ? arDZ : fr }) :
-               `${format(days[0], 'd MMM', { locale: lang === 'ar' ? arDZ : fr })} - ${format(days[days.length-1], 'd MMM yyyy', { locale: lang === 'ar' ? arDZ : fr })}`}
+               days.length > 0 ? `${format(days[0], 'd MMM', { locale: lang === 'ar' ? arDZ : fr })} - ${format(days[days.length-1], 'd MMM yyyy', { locale: lang === 'ar' ? arDZ : fr })}` : t.title}
             </h3>
+
 
             <p className="text-slate-500 text-sm font-medium">{t.subtitle}</p>
           </div>
