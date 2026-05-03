@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'motion/react';
-import { X, Flame, Calendar, Info } from 'lucide-react';
+import { X, Flame, Calendar, Info, ChevronLeft, ChevronRight } from 'lucide-react';
+
 import { cn } from '../lib/utils';
 import { 
   format, 
@@ -10,8 +11,16 @@ import {
   startOfToday,
   startOfMonth,
   endOfMonth,
-  getDay
+  startOfWeek,
+  endOfWeek,
+  addMonths,
+  subMonths,
+  addWeeks,
+  subWeeks,
+  getDay,
+  isSameMonth
 } from 'date-fns';
+
 import { fr, arDZ } from 'date-fns/locale';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -26,15 +35,27 @@ interface ActivityHeatmapProps {
 
 export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ sessions, lang, userProfile }) => {
 
-  const today = startOfToday();
-  const startDate = subDays(today, 119); // Show last ~4 months (120 days)
-  
+  const [viewMode, setViewMode] = React.useState<'all' | 'month' | 'week'>('all');
+  const [currentDate, setCurrentDate] = React.useState(startOfToday());
+
   const days = useMemo(() => {
-    return eachDayOfInterval({
-      start: startDate,
-      end: today
-    });
-  }, [startDate, today]);
+    let start: Date;
+    let end: Date;
+
+    if (viewMode === 'all') {
+      end = startOfToday();
+      start = subDays(end, 119);
+    } else if (viewMode === 'month') {
+      start = startOfMonth(currentDate);
+      end = endOfMonth(currentDate);
+    } else {
+      start = startOfWeek(currentDate, { weekStartsOn: 0 });
+      end = endOfWeek(currentDate, { weekStartsOn: 0 });
+    }
+
+    return eachDayOfInterval({ start, end });
+  }, [viewMode, currentDate]);
+
 
   const activityByDay = useMemo(() => {
     const map: Record<string, number> = {};
@@ -64,9 +85,20 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ sessions, lang
       more: "أكثر",
       less: "أقل",
       totalDays: "أيام النشاط",
-      streak: "السلسلة الحالية"
+      streak: "السلسلة الحالية",
+      all: "الكل",
+      month: "شهر",
+      week: "أسبوع",
+      prev: "السابق",
+      next: "التالي"
     }
   }[lang === 'ar' ? 'ar' : 'fr'];
+  
+  const viewLabels = {
+    fr: { all: "Tout", month: "Mois", week: "Semaine", prev: "Précédent", next: "Suivant" },
+    ar: { all: "الكل", month: "شهر", week: "أسبوع", prev: "السابق", next: "التالي" }
+  }[lang === 'ar' ? 'ar' : 'fr'];
+
 
   const getIntensity = (duration: number) => {
     if (duration === 0) return 0;
@@ -118,6 +150,14 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ sessions, lang
     }
   };
 
+  const navigate = (direction: 'prev' | 'next') => {
+    if (viewMode === 'month') {
+      setCurrentDate(prev => direction === 'prev' ? subMonths(prev, 1) : addMonths(prev, 1));
+    } else if (viewMode === 'week') {
+      setCurrentDate(prev => direction === 'prev' ? subWeeks(prev, 1) : addWeeks(prev, 1));
+    }
+  };
+
 
   // Group days by weeks for the grid
   const weeks: Date[][] = [];
@@ -161,32 +201,65 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ sessions, lang
             <Calendar className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight">{t.title}</h3>
+            <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+              {viewMode === 'all' ? t.title : 
+               viewMode === 'month' ? format(currentDate, 'MMMM yyyy', { locale: lang === 'ar' ? arDZ : fr }) :
+               `${format(days[0], 'd MMM', { locale: lang === 'ar' ? arDZ : fr })} - ${format(days[days.length-1], 'd MMM yyyy', { locale: lang === 'ar' ? arDZ : fr })}`}
+            </h3>
+
             <p className="text-slate-500 text-sm font-medium">{t.subtitle}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 bg-slate-50 p-2 rounded-2xl border border-slate-100">
-          <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-xl shadow-sm">
-            <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-black text-slate-700">
-              {Object.keys(activityByDay).length} {t.totalDays}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] font-black text-slate-400 uppercase mr-2">{t.legend}</span>
-            {[0, 1, 2, 3, 4].map(i => (
-              <div 
-                key={i} 
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200">
+            {(['all', 'month', 'week'] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
                 className={cn(
-                  "w-3 h-3 rounded-sm border",
-                  getBoxStyles(i)
-                )} 
-              />
+                  "px-4 py-2 rounded-xl text-xs font-bold transition-all",
+                  viewMode === mode 
+                    ? "bg-white text-emerald-600 shadow-sm" 
+                    : "text-slate-500 hover:text-slate-700"
+                )}
+              >
+                {viewLabels[mode]}
+              </button>
             ))}
+          </div>
+
+          {viewMode !== 'all' && (
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => navigate('prev')}
+                className="p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all text-slate-600"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span className="sr-only">{viewLabels.prev}</span>
+              </button>
+              <button 
+                onClick={() => navigate('next')}
+                className="p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all text-slate-600"
+              >
+                <ChevronRight className="w-4 h-4" />
+                <span className="sr-only">{viewLabels.next}</span>
+              </button>
+
+            </div>
+          )}
+
+          <div className="flex items-center gap-4 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+            <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-xl shadow-sm">
+              <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-black text-slate-700">
+                {Object.keys(activityByDay).length} {t.totalDays}
+              </span>
+            </div>
           </div>
         </div>
       </div>
+
 
       {/* The 3D Grid */}
       <div className="overflow-x-auto pb-6 custom-scrollbar relative z-10">
@@ -249,8 +322,9 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ sessions, lang
 
                         {/* Tooltip */}
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded-lg opacity-0 group-hover/cell:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
-                          {format(day, 'd MMM', { locale: lang === 'ar' ? arDZ : fr })} • {Math.round(duration / 60)}m
+                          {format(day, 'EEEE d MMMM', { locale: lang === 'ar' ? arDZ : fr })} • {Math.round(duration / 60)}m
                         </div>
+
                       </motion.div>
                     );
                   })}
