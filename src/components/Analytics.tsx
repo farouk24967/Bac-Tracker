@@ -45,6 +45,8 @@ import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
 
 import { generateDailyReport } from '../services/geminiService';
 import Markdown from 'react-markdown';
+import { ActivityHeatmap } from './ActivityHeatmap';
+
 
 interface AnalyticsProps {
   userProfile: UserProfile;
@@ -97,8 +99,9 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
       collection(db, path), 
       where('uid', '==', userProfile.uid),
       orderBy('date', 'desc'),
-      limit(30)
+      limit(150)
     );
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setStudySessions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (error) => {
@@ -754,7 +757,11 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
         )}
       </section>
 
+
+      <ActivityHeatmap sessions={studySessions} lang={lang} userProfile={userProfile} />
+
       <ActivityMemory userProfile={userProfile} lang={lang} />
+
 
       <GradeManager userProfile={userProfile} lang={lang} stream={stream} subjects={subjects} />
     </div>
