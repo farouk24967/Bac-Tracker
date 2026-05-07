@@ -1,5 +1,6 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 import {defineConfig, loadEnv} from 'vite';
 import { fileURLToPath } from 'url';
@@ -11,7 +12,40 @@ export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
     base: '/',
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(), 
+      tailwindcss(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+        manifest: {
+          name: 'Bac Tracker',
+          short_name: 'BacTracker',
+          description: 'L\'excellence au Bac algérien',
+          theme_color: '#4f46e5',
+          background_color: '#ffffff',
+          display: 'standalone',
+          icons: [
+            {
+              src: 'icons/icon-192.webp',
+              sizes: '192x192',
+              type: 'image/webp'
+            },
+            {
+              src: 'icons/icon-512.webp',
+              sizes: '512x512',
+              type: 'image/webp'
+            },
+            {
+              src: 'icons/icon-512.webp',
+              sizes: '512x512',
+              type: 'image/webp',
+              purpose: 'any maskable'
+            }
+          ]
+        }
+      })
+    ],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },
