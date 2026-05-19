@@ -4,9 +4,9 @@ import { db } from "../firebase";
 import { collection, addDoc } from "firebase/firestore";
 
 const base44 = createClient({
-  appId: "69f8f56ca433d203293833a1",
+  appId: import.meta.env.VITE_BASE44_APP_ID || "69f8f56ca433d203293833a1",
   headers: {
-    "api_key": "834f7448afe2478ca477d9961fbf71fc"
+    "api_key": import.meta.env.VITE_BASE44_API_KEY || "834f7448afe2478ca477d9961fbf71fc"
   }
 });
 
@@ -35,9 +35,9 @@ export const generateStudyAdvice = async (stream: string, average: number, targe
       model: "gemini_3_flash",
     });
     return typeof response === 'string' ? response : JSON.stringify(response);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating study advice:", error);
-    return lang === 'ar' ? "عذراً، لم أتمكن من إنشاء النصائح في الوقت الحالي. حاول مرة أخرى لاحقاً!" : "Désolé, je n'ai pas pu générer de conseils pour le moment. Réessaie plus tard !";
+    return `Erreur technique: ${error?.message || 'Erreur API'}`;
   }
 };
 
@@ -155,9 +155,9 @@ export const chatWithAI = async (message: string, userProfile: any, chatHistory:
     }
 
     return text;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in AI chat:", error);
-    return lang === 'ar' ? "عذراً، واجهت مشكلة تقنية صغيرة. هل يمكنك إعادة صياغة سؤالك؟" : "Oups, j'ai eu un petit problème technique. Peux-tu reformuler ta question ?";
+    return `Erreur technique: ${error?.message || 'Erreur API'}`;
   }
 };
 
@@ -192,9 +192,9 @@ export const analyzePerformance = async (userProfile: any, progress: any[]) => {
       model: "gemini_3_flash"
     });
     return typeof response === 'string' ? response : JSON.stringify(response);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error analyzing performance:", error);
-    return lang === 'ar' ? "خطأ أثناء تحليل الأداء." : "Erreur lors de l'analyse des performances.";
+    return `Erreur technique: ${error?.message || 'Erreur API'}`;
   }
 };
 
@@ -233,9 +233,9 @@ export const generateFlashcards = async (topic: string, stream: string, lang: st
       ...(file_urls.length > 0 ? { file_urls } : {})
     });
     return typeof response === 'string' ? response : JSON.stringify(response);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating flashcards:", error);
-    return lang === 'ar' ? "خطأ أثناء إنشاء بطاقات المراجعة." : "Erreur lors de la génération des flashcards.";
+    return `Erreur technique: ${error?.message || 'Erreur API'}`;
   }
 };
 
@@ -271,9 +271,9 @@ export const generateModernSummary = async (topic: string, stream: string, lang:
       ...(file_urls.length > 0 ? { file_urls } : {})
     });
     return typeof response === 'string' ? response : JSON.stringify(response);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating summary:", error);
-    return lang === 'ar' ? "خطأ أثناء إنشاء الملخص." : "Erreur lors de la génération du résumé.";
+    return `Erreur technique: ${error?.message || 'Erreur API'}`;
   }
 };
 
@@ -378,8 +378,8 @@ export const generateDailyReport = async (userProfile: any, activities: any[], l
       model: "gemini_3_flash"
     });
     return typeof response === 'string' ? response : JSON.stringify(response);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating daily report:", error);
-    return lang === 'ar' ? "خطأ أثناء إنشاء التقرير اليومي." : "Erreur lors de la génération du rapport quotidien.";
+    return `Erreur technique: ${error?.message || 'Erreur API'}`;
   }
 };

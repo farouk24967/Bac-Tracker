@@ -1,11 +1,14 @@
 /// <reference types="vite/client" />
-import { GoogleGenAI } from '@google/genai';
+import { createClient } from '@base44/sdk';
 
-const ai = new GoogleGenAI({ 
-  apiKey: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCpvYN6oUVDNCA-f2uN1nT5BuwtpKCSvWc' 
+const base44 = createClient({
+  appId: import.meta.env.VITE_BASE44_APP_ID || "69f8f56ca433d203293833a1",
+  headers: {
+    "api_key": import.meta.env.VITE_BASE44_API_KEY || "834f7448afe2478ca477d9961fbf71fc"
+  }
 });
 
-const MODEL_NAME = 'gemini-1.5-flash';
+const MODEL_NAME = 'gemini_3_flash';
 
 export async function getRecommendations(grades: any[], subjects: any[]) {
   const prompt = `
@@ -17,51 +20,43 @@ export async function getRecommendations(grades: any[], subjects: any[]) {
   `;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await base44.integrations.Core.InvokeLLM({
       model: MODEL_NAME,
-      contents: prompt
+      prompt: prompt
     });
-    return response.candidates?.[0]?.content?.parts?.[0]?.text || 'Unable to generate recommendations at this time.';
-  } catch (error) {
+    return typeof response === 'string' ? response : JSON.stringify(response);
+  } catch (error: any) {
     console.error('Error getting recommendations:', error);
-    return 'Unable to generate recommendations at this time.';
+    return `Erreur technique: ${error?.message || 'Erreur API'}`;
   }
 }
 
 export async function analyzeImage(imageBase64: string, mimeType: string, prompt: string) {
   try {
-    const response = await ai.models.generateContent({
+    const response = await base44.integrations.Core.InvokeLLM({
       model: MODEL_NAME,
-      contents: [
-        { text: prompt },
-        {
-          inlineData: {
-            data: imageBase64,
-            mimeType: mimeType,
-          },
-        }
-      ]
+      prompt: prompt,
+      file_urls: [`data:${mimeType};base64,${imageBase64}`]
     });
-    return response.candidates?.[0]?.content?.parts?.[0]?.text || 'Unable to analyze image at this time.';
-  } catch (error) {
+    return typeof response === 'string' ? response : JSON.stringify(response);
+  } catch (error: any) {
     console.error('Error analyzing image:', error);
-    return 'Unable to analyze image at this time.';
+    return `Erreur technique: ${error?.message || 'Erreur API'}`;
   }
 }
 
 export async function chatWithGemini(prompt: string) {
+  const fullPrompt = `System: You are an AI tutor helping an Algerian BAC student. Be encouraging, concise, and helpful in French. You can help with math, physics, languages, and study tips.
+  
+  User: ${prompt}`;
   try {
-    const response = await ai.models.generateContent({ 
+    const response = await base44.integrations.Core.InvokeLLM({ 
       model: MODEL_NAME,
-      contents: prompt,
-      config: {
-        systemInstruction: "You are an AI tutor helping an Algerian BAC student. Be encouraging, concise, and helpful in French. You can help with math, physics, languages, and study tips."
-      }
+      prompt: fullPrompt
     });
-    return response.candidates?.[0]?.content?.parts?.[0]?.text || 'Désolé, j\'ai du mal à me connecter en ce moment.';
-  } catch (error) {
+    return typeof response === 'string' ? response : JSON.stringify(response);
+  } catch (error: any) {
     console.error('Error chatting with Gemini:', error);
-    return 'Désolé, j\'ai du mal à me connecter en ce moment.';
+    return `Erreur technique: ${error?.message || 'Erreur API'}`;
   }
 }
-
