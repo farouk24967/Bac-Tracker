@@ -18,6 +18,7 @@
     "mobile:assets": "npx capacitor-assets generate"
   },
   "dependencies": {
+    "@base44/sdk": "^0.8.29",
     "@capacitor-firebase/authentication": "^8.2.0",
     "@google/genai": "^1.29.0",
     "@tailwindcss/typography": "^0.5.19",

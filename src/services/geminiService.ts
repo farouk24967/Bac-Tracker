@@ -1,10 +1,13 @@
 /// <reference types="vite/client" />
-import { GoogleGenAI, Type } from "@google/genai";
+import { createClient } from "@base44/sdk";
 import { db } from "../firebase";
 import { collection, addDoc } from "firebase/firestore";
 
-const ai = new GoogleGenAI({ 
-  apiKey: import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCpvYN6oUVDNCA-f2uN1nT5BuwtpKCSvWc' 
+const base44 = createClient({
+  appId: "69f8f56ca433d203293833a1",
+  headers: {
+    "api_key": "834f7448afe2478ca477d9961fbf71fc"
+  }
 });
 
 export const generateStudyAdvice = async (stream: string, average: number, target: number, lang: string = 'fr') => {
@@ -27,11 +30,11 @@ export const generateStudyAdvice = async (stream: string, average: number, targe
   Réponds en ${targetLang} de manière motivante et structurée.`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: prompt,
+    const response = await base44.integrations.Core.InvokeLLM({
+      prompt: prompt,
+      model: "gemini_3_flash",
     });
-    return response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    return typeof response === 'string' ? response : JSON.stringify(response);
   } catch (error) {
     console.error("Error generating study advice:", error);
     return lang === 'ar' ? "عذراً، لم أتمكن من إنشاء النصائح في الوقت الحالي. حاول مرة أخرى لاحقاً!" : "Désolé, je n'ai pas pu générer de conseils pour le moment. Réessaie plus tard !";
@@ -62,110 +65,96 @@ export const chatWithAI = async (message: string, userProfile: any, chatHistory:
   - Localisation : Algérie (Cloud DZ)
   
   FONCTIONNALITÉS SPÉCIALES (AJOUT AU TABLEAU DE BORD / CALENDRIER) :
-  Tu peux exécuter des outils pour ajouter directement des tâches et des sessions pour l'utilisateur.
   Si l'utilisateur demande d'ajouter une tâche ou une session de révision, SUIS CE PROCESSUS ÉTAPE PAR ÉTAPE :
   1. Identifie les informations manquantes. 
   Pour une tâche, il faut: Titre, Matière, Date d'échéance (YYYY-MM-DD), Priorité (high/medium/low), Temps estimé en minutes.
   Pour une session: Titre, Matière, Date (YYYY-MM-DD), Heure de début (HH:mm), Durée en minutes, Brève description.
-  2. Si des informations manquent, POSE DES QUESTIONS à l'utilisateur pour les obtenir (par exemple, "Pour quelle matière voulez-vous cette tâche ? et pour quelle date ?").
-  3. Une fois que TU AS TOUTES LES INFORMATIONS, utilise l'appel de fonction approprié (addTaskToDashboard ou addScheduledSession). Ne liste pas les étapes, appelle juste la fonction.
+  2. Si des informations manquent, POSE DES QUESTIONS à l'utilisateur pour les obtenir.
+  3. Une fois que TU AS TOUTES LES INFORMATIONS, tu dois répondre avec un appel de fonction au format JSON (décrit ci-dessous).
 
   IMPORTANT : Tu maîtrises toutes les langues du monde. 
-  Tu dois répondre dans la langue utilisée par l'étudiant (Français, Arabe classique, Anglais, Espagnol, etc.).
-  Tu ES PARTICULIÈREMENT encouragé à comprendre et à utiliser le DARIJA ALGÉRIEN (arabe dialectal algérien) si l'étudiant l'utilise, pour créer une relation de proximité et de confiance (ex: "Saha", "Besah", "Khoya/Khti", "Bon courage kima nqolo").
+  Tu dois répondre dans la langue utilisée par l'étudiant.
+  Tu ES PARTICULIÈREMENT encouragé à comprendre et à utiliser le DARIJA ALGÉRIEN si l'étudiant l'utilise.
   
-  Sois toujours encourageant, précis et utilise des termes familiers aux étudiants algériens (ex: "filière", "mention", "coefficient", "rattrapage").
-  Si l'étudiant pose une question pédagogique complexe, assure-toi que l'explication reste claire et académiquement rigoureuse, même si tu utilises un ton amical.`;
+  Sois toujours encourageant, précis et utilise des termes familiers aux étudiants algériens.`;
 
-  const functionDeclarations = [
-    {
-      name: "addTaskToDashboard",
-      description: "Ajoute une tâche directement dans le tableau de bord (dashboard) de l'utilisateur.",
-      parameters: {
-        type: Type.OBJECT,
-        properties: {
-          title: { type: Type.STRING, description: "Titre de la tâche (ex: Faire exercice 4)" },
-          subject: { type: Type.STRING, description: "Nom de la matière" },
-          dueDate: { type: Type.STRING, description: "Date d'échéance au format YYYY-MM-DD" },
-          priority: { type: Type.STRING, description: "Niveau de priorité: 'high', 'medium', 'low'" },
-          estimatedTime: { type: Type.NUMBER, description: "Temps estimé en minutes (ex: 60)" }
-        },
-        required: ["title", "subject", "dueDate", "priority", "estimatedTime"]
-      }
-    },
-    {
-      name: "addScheduledSession",
-      description: "Ajoute une session d'étude directement dans le calendrier (calendar) de l'utilisateur.",
-      parameters: {
-        type: Type.OBJECT,
-        properties: {
-          title: { type: Type.STRING, description: "Titre de la session (ex: مراجعة الرياضيات - الدوال)" },
-          subjectId: { type: Type.STRING, description: "Nom de la matière" },
-          date: { type: Type.STRING, description: "Date de la session au format YYYY-MM-DD" },
-          startTime: { type: Type.STRING, description: "Heure de début au format HH:mm" },
-          duration: { type: Type.NUMBER, description: "Durée en minutes" },
-          description: { type: Type.STRING, description: "Description de ce qui sera révisé" }
-        },
-        required: ["title", "subjectId", "date", "startTime", "duration", "description"]
+  const historyText = chatHistory.map(h => `${h.role}: ${h.parts.map(p => p.text).join(' ')}`).join('\n');
+
+  const prompt = `${systemInstruction}
+  
+  CONTEXTE DE LA CONVERSATION:
+  ${historyText}
+  
+  Utilisateur: "${message}"
+  
+  RÈGLES DE RÉPONSE:
+  Si tu as toutes les informations pour ajouter une tâche ou une session, réponds EXACTEMENT et UNIQUEMENT avec ce format JSON (aucun autre texte):
+  {
+    "functionCall": {
+      "name": "addTaskToDashboard", // ou "addScheduledSession"
+      "args": {
+        // Pour addTaskToDashboard: "title", "subject", "dueDate" (YYYY-MM-DD), "priority", "estimatedTime"
+        // Pour addScheduledSession: "title", "subjectId", "date" (YYYY-MM-DD), "startTime" (HH:mm), "duration", "description"
       }
     }
-  ];
+  }
+  
+  Sinon, réponds normalement en tant qu'assistant.`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: [
-        ...chatHistory.map(h => ({ role: h.role, parts: h.parts })),
-        { role: 'user', parts: [{ text: message }] }
-      ],
-      config: {
-        systemInstruction,
-        tools: [{ functionDeclarations }]
-      }
+    const response = await base44.integrations.Core.InvokeLLM({
+      prompt,
+      model: "gemini_3_flash"
     });
 
-    const calls = response.candidates?.[0]?.content?.parts?.filter(p => p.functionCall);
-    
-    if (calls && calls.length > 0) {
-      const successMessages = [];
-      
-      for (const part of calls) {
-        const call = part.functionCall!;
-        if (call.name === "addTaskToDashboard") {
-          const args = call.args as any;
-          await addDoc(collection(db, 'tasks'), {
-            title: args.title,
-            subject: args.subject,
-            dueDate: args.dueDate,
-            priority: args.priority,
-            estimatedTime: args.estimatedTime,
-            completed: false,
-            uid: userProfile.uid,
-            createdAt: new Date().toISOString()
-          });
-          successMessages.push(lang === 'ar' ? `تم إضافة المهمة "${args.title}" بنجاح إلى مهامك!` : `Tâche "${args.title}" ajoutée avec succès !`);
-        } else if (call.name === "addScheduledSession") {
-          const args = call.args as any;
-          await addDoc(collection(db, 'scheduledSessions'), {
-            title: args.title,
-            subjectId: args.subjectId,
-            date: args.date,
-            startTime: args.startTime,
-            duration: args.duration,
-            description: args.description,
-            completed: false,
-            uid: userProfile.uid,
-            createdAt: new Date().toISOString()
-          });
-          successMessages.push(lang === 'ar' ? `تم إضافة الحصة "${args.title}" بنجاح إلى التقويم الخاص بك!` : `Session "${args.title}" ajoutée avec succès au calendrier !`);
+    const text = typeof response === 'string' ? response : JSON.stringify(response);
+
+    // Parse potential function calls
+    try {
+      const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      if (jsonStr.startsWith('{') && jsonStr.includes('functionCall')) {
+        const parsed = JSON.parse(jsonStr);
+        if (parsed.functionCall) {
+          const call = parsed.functionCall;
+          const successMessages = [];
+          
+          if (call.name === "addTaskToDashboard") {
+            const args = call.args;
+            await addDoc(collection(db, 'tasks'), {
+              title: args.title,
+              subject: args.subject,
+              dueDate: args.dueDate,
+              priority: args.priority,
+              estimatedTime: args.estimatedTime,
+              completed: false,
+              uid: userProfile.uid,
+              createdAt: new Date().toISOString()
+            });
+            successMessages.push(lang === 'ar' ? `تم إضافة المهمة "${args.title}" بنجاح إلى مهامك!` : `Tâche "${args.title}" ajoutée avec succès !`);
+          } else if (call.name === "addScheduledSession") {
+            const args = call.args;
+            await addDoc(collection(db, 'scheduledSessions'), {
+              title: args.title,
+              subjectId: args.subjectId,
+              date: args.date,
+              startTime: args.startTime,
+              duration: args.duration,
+              description: args.description,
+              completed: false,
+              uid: userProfile.uid,
+              createdAt: new Date().toISOString()
+            });
+            successMessages.push(lang === 'ar' ? `تم إضافة الحصة "${args.title}" بنجاح إلى التقويم الخاص بك!` : `Session "${args.title}" ajoutée avec succès au calendrier !`);
+          }
+          
+          return successMessages.join("\n");
         }
       }
-      
-      const text = response.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      return text + (text ? "\n\n" : "") + successMessages.join("\n");
+    } catch (e) {
+      // Not a valid JSON function call, will return normally
     }
 
-    return response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    return text;
   } catch (error) {
     console.error("Error in AI chat:", error);
     return lang === 'ar' ? "عذراً، واجهت مشكلة تقنية صغيرة. هل يمكنك إعادة صياغة سؤالك؟" : "Oups, j'ai eu un petit problème technique. Peux-tu reformuler ta question ?";
@@ -198,11 +187,11 @@ export const analyzePerformance = async (userProfile: any, progress: any[]) => {
   Réponds en ${targetLang} de manière structurée avec des conseils spécifiques au programme algérien.`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: prompt,
+    const response = await base44.integrations.Core.InvokeLLM({
+      prompt: prompt,
+      model: "gemini_3_flash"
     });
-    return response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    return typeof response === 'string' ? response : JSON.stringify(response);
   } catch (error) {
     console.error("Error analyzing performance:", error);
     return lang === 'ar' ? "خطأ أثناء تحليل الأداء." : "Erreur lors de l'analyse des performances.";
@@ -233,22 +222,17 @@ export const generateFlashcards = async (topic: string, stream: string, lang: st
   Adapte le contenu au programme officiel algérien.`;
 
   try {
-    const contents: any[] = [{ parts: [{ text: prompt }] }];
-    
+    const file_urls: string[] = [];
     if (fileData) {
-      contents[0].parts.push({
-        inlineData: {
-          mimeType: fileData.mimeType,
-          data: fileData.data
-        }
-      });
+      file_urls.push(`data:${fileData.mimeType};base64,${fileData.data}`);
     }
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: contents,
+    const response = await base44.integrations.Core.InvokeLLM({
+      prompt: prompt,
+      model: "gemini_3_flash",
+      ...(file_urls.length > 0 ? { file_urls } : {})
     });
-    return response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    return typeof response === 'string' ? response : JSON.stringify(response);
   } catch (error) {
     console.error("Error generating flashcards:", error);
     return lang === 'ar' ? "خطأ أثناء إنشاء بطاقات المراجعة." : "Erreur lors de la génération des flashcards.";
@@ -276,22 +260,17 @@ export const generateModernSummary = async (topic: string, stream: string, lang:
   Utilise un ton motivant et un formatage clair (Markdown).`;
 
   try {
-    const contents: any[] = [{ parts: [{ text: prompt }] }];
-    
+    const file_urls: string[] = [];
     if (fileData) {
-      contents[0].parts.push({
-        inlineData: {
-          mimeType: fileData.mimeType,
-          data: fileData.data
-        }
-      });
+      file_urls.push(`data:${fileData.mimeType};base64,${fileData.data}`);
     }
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: contents,
+    const response = await base44.integrations.Core.InvokeLLM({
+      prompt: prompt,
+      model: "gemini_3_flash",
+      ...(file_urls.length > 0 ? { file_urls } : {})
     });
-    return response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    return typeof response === 'string' ? response : JSON.stringify(response);
   } catch (error) {
     console.error("Error generating summary:", error);
     return lang === 'ar' ? "خطأ أثناء إنشاء الملخص." : "Erreur lors de la génération du résumé.";
@@ -337,31 +316,30 @@ export const generateStudySchedule = async (tasks: any[], goals: any[], userProf
   5. Inclus des sessions de rappel pour les matières fortes.
   6. Adapte la difficulté des sessions en fonction de la progression.
   
-  IMPORTANT : Réponds UNIQUEMENT avec un tableau JSON valide contenant des objets avec cette structure exacte, sans aucun texte avant ou après, et sans markdown de bloc de code (pas de \`\`\`json) :
-  [
-    {
-      "title": "Nom de la session en arabe (ex: مراجعة الرياضيات - المتتاليات العددية)",
-      "date": "YYYY-MM-DD",
-      "startTime": "HH:mm",
-      "duration": 60,
-      "description": "Description précise en arabe incluant le chapitre spécifique du programme algérien",
-      "subjectId": "Nom de la matière en arabe"
-    }
-  ]
-  
   Assure-toi que les dates sont au format YYYY-MM-DD et commencent à partir de ${today}. Les heures (startTime) doivent être réalistes (entre 08:00 et 22:30) et ne pas se chevaucher.`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: prompt,
+    const response = await base44.integrations.Core.InvokeLLM({
+      prompt: prompt,
+      model: "gemini_3_flash",
+      response_json_schema: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            date: { type: "string" },
+            startTime: { type: "string" },
+            duration: { type: "number" },
+            description: { type: "string" },
+            subjectId: { type: "string" }
+          },
+          required: ["title", "date", "startTime", "duration", "description", "subjectId"]
+        }
+      }
     });
     
-    let text = response.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
-    // Clean up potential markdown formatting
-    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    
-    return JSON.parse(text);
+    return Array.isArray(response) ? response : [];
   } catch (error) {
     console.error("Error generating study schedule:", error);
     return [];
@@ -395,11 +373,11 @@ export const generateDailyReport = async (userProfile: any, activities: any[], l
   Réponds en ${targetLang} de manière structurée et chaleureuse. Utilise le format Markdown.`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: prompt,
+    const response = await base44.integrations.Core.InvokeLLM({
+      prompt: prompt,
+      model: "gemini_3_flash"
     });
-    return response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    return typeof response === 'string' ? response : JSON.stringify(response);
   } catch (error) {
     console.error("Error generating daily report:", error);
     return lang === 'ar' ? "خطأ أثناء إنشاء التقرير اليومي." : "Erreur lors de la génération du rapport quotidien.";
