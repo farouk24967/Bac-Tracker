@@ -98,7 +98,7 @@ export const TEACHER_RESOURCES: TeacherResource[] = [
   {
     id: 'hg1',
     name: 'Prof Guenchouba',
-    subject: 'التاريخ والجغرافيا',
+    subject: 'التاريخ',
     url: 'https://www.youtube.com/@AmineGuenchouba',
     description: 'Le prof le plus populaire sur YouTube et TikTok.',
     type: 'video'
@@ -106,7 +106,7 @@ export const TEACHER_RESOURCES: TeacherResource[] = [
   {
     id: 'hg2',
     name: 'Prof Bournan',
-    subject: 'التاريخ والجغرافيا',
+    subject: 'التاريخ',
     url: 'https://www.youtube.com/@BournanHistoireGeo',
     description: 'Résumés et schémas pour mémoriser facilement.',
     type: 'video'
@@ -114,7 +114,7 @@ export const TEACHER_RESOURCES: TeacherResource[] = [
   {
     id: 'hg3',
     name: 'Mohamed Larouk',
-    subject: 'التاريخ والجغرافيا',
+    subject: 'التاريخ',
     url: 'https://www.youtube.com/@MohamedLarouk',
     description: 'Approche pédagogique moderne et complète.',
     type: 'video'
@@ -220,7 +220,7 @@ export const TEACHER_RESOURCES: TeacherResource[] = [
   {
     id: 'ge1',
     name: 'Chaînes Spécialisées Gestion',
-    subject: 'التسيير المحاسبي والمالي',
+    subject: 'المحاسبة',
     url: 'https://www.youtube.com/results?search_query=التسيير+و+الاقتصاد+الجزائر',
     description: 'Toutes les ressources pour la filière Gestion et Économie.',
     type: 'video'
@@ -228,7 +228,7 @@ export const TEACHER_RESOURCES: TeacherResource[] = [
   {
     id: 'ge2',
     name: 'Econodz',
-    subject: 'الاقتصاد والمناجمنت',
+    subject: 'الاقتصاد',
     url: 'https://www.youtube.com/results?search_query=الاقتصاد+والمناجمنت+بكالوريا+الجزائر',
     description: 'Cours complets d\'économie.',
     type: 'video'

@@ -20,9 +20,10 @@ export const Settings: React.FC<SettingsProps> = ({ userProfile }) => {
     });
   };
 
-  const t = {
+  const tDict = {
     fr: {
       title: "Paramètres",
+      subtitle: "Personnalise ton expérience Bac Tracker.",
       motivation: "Motivation Quotidienne",
       motivation_desc: "Affiche une carte inspirante chaque jour à l'ouverture.",
       type: "Type de contenu",
@@ -30,10 +31,18 @@ export const Settings: React.FC<SettingsProps> = ({ userProfile }) => {
       type_spiritual: "Spirituel seulement",
       type_both: "Les deux",
       enabled: "Activé",
-      disabled: "Désactivé"
+      disabled: "Désactivé",
+      theme: "Thème & Couleurs",
+      theme_desc: "Personnalise les couleurs de ton espace.",
+      account: "Compte",
+      account_desc: "Déconnecte-toi de ton compte en toute sécurité.",
+      logout: "Déconnexion",
+      notifications: "Notifications Push",
+      soon: "D'autres options de personnalisation arrivent bientôt pour t'aider à mieux t'organiser !"
     },
     ar: {
       title: "الإعدادات",
+      subtitle: "خصص تجربتك مع Bac Tracker.",
       motivation: "التحفيز اليومي",
       motivation_desc: "عرض بطاقة ملهمة كل يوم عند الافتتاح.",
       type: "نوع المحتوى",
@@ -41,15 +50,61 @@ export const Settings: React.FC<SettingsProps> = ({ userProfile }) => {
       type_spiritual: "روحاني فقط",
       type_both: "كلاهما",
       enabled: "مفعل",
-      disabled: "معطل"
+      disabled: "معطل",
+      theme: "المظهر والألوان",
+      theme_desc: "اختر اللون الرئيسي للتطبيق",
+      account: "الحساب",
+      account_desc: "تسجيل الخروج من حسابك للتبديل بين الحسابات",
+      logout: "تسجيل الخروج",
+      notifications: "إشعارات الدفع",
+      soon: "المزيد من خيارات التخصيص قادمة قريباً لمساعدتك على التنظيم بشكل أفضل!"
+    },
+    en: {
+      title: "Settings",
+      subtitle: "Personalize your Bac Tracker experience.",
+      motivation: "Daily Motivation",
+      motivation_desc: "Show an inspiring card every day on opening.",
+      type: "Content type",
+      type_motivation: "Motivation only",
+      type_spiritual: "Spiritual only",
+      type_both: "Both",
+      enabled: "Enabled",
+      disabled: "Disabled",
+      theme: "Theme & Colors",
+      theme_desc: "Customize the colors of your space.",
+      account: "Account",
+      account_desc: "Log out of your account safely.",
+      logout: "Logout",
+      notifications: "Push Notifications",
+      soon: "More customization options are coming soon to help you stay organized!"
+    },
+    es: {
+      title: "Ajustes",
+      subtitle: "Personaliza tu experiencia Bac Tracker.",
+      motivation: "Motivación Diaria",
+      motivation_desc: "Muestra una tarjeta inspiradora cada día al abrir.",
+      type: "Tipo de contenido",
+      type_motivation: "Solo motivación",
+      type_spiritual: "Solo espiritual",
+      type_both: "Ambos",
+      enabled: "Activado",
+      disabled: "Desactivado",
+      theme: "Tema y Colores",
+      theme_desc: "Personaliza los colores de tu espacio.",
+      account: "Cuenta",
+      account_desc: "Cierra sesión de tu cuenta de forma segura.",
+      logout: "Cerrar sesión",
+      notifications: "Notificaciones Push",
+      soon: "¡Pronto llegarán más opciones de personalización para ayudarte a organizarte mejor!"
     }
-  }[lang === 'ar' ? 'ar' : 'fr'];
+  };
+  const t = tDict[lang] || tDict.fr;
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
       <div>
         <h2 className="text-3xl font-black text-slate-900">{t.title}</h2>
-        <p className="text-slate-500 mt-1">Personnalise ton expérience Bac Tracker.</p>
+        <p className="text-slate-500 mt-1">{t.subtitle}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -125,12 +180,8 @@ export const Settings: React.FC<SettingsProps> = ({ userProfile }) => {
               <Moon className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-xl font-black text-slate-900">
-                {lang === 'ar' ? 'المظهر والألوان' : 'Thème & Couleurs'}
-              </h3>
-              <p className="text-slate-500 text-sm">
-                 {lang === 'ar' ? 'اختر اللون الرئيسي للتطبيق' : 'Personnalise les couleurs de ton espace.'}
-              </p>
+              <h3 className="text-xl font-black text-slate-900">{t.theme}</h3>
+              <p className="text-slate-500 text-sm">{t.theme_desc}</p>
             </div>
           </div>
 
@@ -179,7 +230,7 @@ export const Settings: React.FC<SettingsProps> = ({ userProfile }) => {
             <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
               <div className="flex items-center gap-3">
                 <Bell className="w-5 h-5 text-slate-400" />
-                <span className="font-bold text-slate-700">Notifications Push</span>
+                <span className="font-bold text-slate-700">{t.notifications}</span>
               </div>
               <div className="w-14 h-8 rounded-full bg-slate-200" />
             </div>
@@ -187,7 +238,7 @@ export const Settings: React.FC<SettingsProps> = ({ userProfile }) => {
           
           <div className="p-6 bg-amber-50 rounded-3xl border border-amber-100">
             <p className="text-xs text-amber-700 font-medium leading-relaxed">
-              D'autres options de personnalisation arrivent bientôt pour t'aider à mieux t'organiser !
+              {t.soon}
             </p>
           </div>
         </div>
@@ -199,12 +250,8 @@ export const Settings: React.FC<SettingsProps> = ({ userProfile }) => {
               <LogOut className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-xl font-black text-slate-900">
-                {lang === 'ar' ? 'الحساب' : 'Compte'}
-              </h3>
-              <p className="text-slate-600 text-sm">
-                {lang === 'ar' ? 'تسجيل الخروج من حسابك للتبديل بين الحسابات' : 'Déconnecte-toi de ton compte en toute sécurité.'}
-              </p>
+              <h3 className="text-xl font-black text-slate-900">{t.account}</h3>
+              <p className="text-slate-600 text-sm">{t.account_desc}</p>
             </div>
           </div>
           <button 
@@ -212,7 +259,7 @@ export const Settings: React.FC<SettingsProps> = ({ userProfile }) => {
             className="w-full md:w-auto px-8 py-4 bg-red-600 hover:bg-red-700 text-white font-black rounded-2xl shadow-lg shadow-red-200 transition-all active:scale-95 flex items-center justify-center gap-2 group"
           >
             <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            {lang === 'ar' ? 'تسجيل الخروج' : 'Déconnexion'}
+            {t.logout}
           </button>
         </div>
       </div>

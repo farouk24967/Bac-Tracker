@@ -32,7 +32,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ScheduledSession, UserProfile, Language, Task, StudyGoal } from '../types';
-import { translations } from '../translations';
+import { safeT } from '../translations';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
@@ -87,7 +87,155 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
   });
 
   const lang: Language = userProfile.language || 'fr';
-  const t = translations[lang];
+  const t = safeT(lang);
+
+  const tDict = {
+    fr: {
+      sessionCompletedTitle: "Session terminée 🎉",
+      pointsEarnedMsg: (n: number) => `Tu as gagné ${n} points !`,
+      calendarLinked: "Calendrier lié avec succès (simulation).",
+      smartCalendar: "Calendrier Intelligent",
+      filterAll: 'Tout',
+      filterMorning: 'Matin',
+      filterAfternoon: 'A-M',
+      filterEvening: 'Soir',
+      week: "Semaine",
+      day: "Jour",
+      addSession: "Ajouter une session",
+      generateSmartPlan: "Générer planning IA (Bac)",
+      linkGoogle: "Lier à Google",
+      periodMorning: 'Matin (08:00 - 12:00)',
+      periodAfternoon: 'Après-midi (13:30 - 17:30)',
+      periodEvening: 'Soir (19:00 - 22:30)',
+      done: "Terminé",
+      completeSession: "Compléter la session",
+      freeSpace: "Espace libre",
+      newSession: "Nouvelle Session",
+      addManualSession: "Ajoute manuellement une session",
+      title: "Titre",
+      titlePlaceholder: "Ex: Révision Maths",
+      date: "Date",
+      time: "Heure",
+      durationMin: "Durée (min)",
+      subject: "Matière",
+      subjectPlaceholder: "Maths, Physique...",
+      description: "Description",
+      descriptionPlaceholder: "Détails de la session...",
+      cancel: "Annuler",
+      add: "Ajouter",
+      editSession: "Modifier Session",
+      saveChanges: "Enregistrer"
+    },
+    en: {
+      sessionCompletedTitle: "Session finished 🎉",
+      pointsEarnedMsg: (n: number) => `You earned ${n} points!`,
+      calendarLinked: "Calendar linked successfully (simulation).",
+      smartCalendar: "Smart Calendar",
+      filterAll: 'All',
+      filterMorning: 'Morning',
+      filterAfternoon: 'PM',
+      filterEvening: 'Evening',
+      week: "Week",
+      day: "Day",
+      addSession: "Add a session",
+      generateSmartPlan: "Generate AI plan (Bac)",
+      linkGoogle: "Link to Google",
+      periodMorning: 'Morning (08:00 - 12:00)',
+      periodAfternoon: 'Afternoon (13:30 - 17:30)',
+      periodEvening: 'Evening (19:00 - 22:30)',
+      done: "Done",
+      completeSession: "Complete session",
+      freeSpace: "Free space",
+      newSession: "New Session",
+      addManualSession: "Manually add a session",
+      title: "Title",
+      titlePlaceholder: "Ex: Math review",
+      date: "Date",
+      time: "Time",
+      durationMin: "Duration (min)",
+      subject: "Subject",
+      subjectPlaceholder: "Math, Physics...",
+      description: "Description",
+      descriptionPlaceholder: "Session details...",
+      cancel: "Cancel",
+      add: "Add",
+      editSession: "Edit Session",
+      saveChanges: "Save changes"
+    },
+    es: {
+      sessionCompletedTitle: "Sesión terminada 🎉",
+      pointsEarnedMsg: (n: number) => `¡Has ganado ${n} puntos!`,
+      calendarLinked: "Calendario vinculado con éxito (simulación).",
+      smartCalendar: "Calendario Inteligente",
+      filterAll: 'Todo',
+      filterMorning: 'Mañana',
+      filterAfternoon: 'Tarde',
+      filterEvening: 'Noche',
+      week: "Semana",
+      day: "Día",
+      addSession: "Añadir una sesión",
+      generateSmartPlan: "Generar plan IA (Bac)",
+      linkGoogle: "Vincular con Google",
+      periodMorning: 'Mañana (08:00 - 12:00)',
+      periodAfternoon: 'Tarde (13:30 - 17:30)',
+      periodEvening: 'Noche (19:00 - 22:30)',
+      done: "Completado",
+      completeSession: "Completar la sesión",
+      freeSpace: "Espacio libre",
+      newSession: "Nueva Sesión",
+      addManualSession: "Añade una sesión manualmente",
+      title: "Título",
+      titlePlaceholder: "Ej: Repaso de mates",
+      date: "Fecha",
+      time: "Hora",
+      durationMin: "Duración (min)",
+      subject: "Materia",
+      subjectPlaceholder: "Matemáticas, Física...",
+      description: "Descripción",
+      descriptionPlaceholder: "Detalles de la sesión...",
+      cancel: "Cancelar",
+      add: "Añadir",
+      editSession: "Editar Sesión",
+      saveChanges: "Guardar cambios"
+    },
+    ar: {
+      sessionCompletedTitle: "انتهت الجلسة 🎉",
+      pointsEarnedMsg: (n: number) => `لقد ربحت ${n} نقطة!`,
+      calendarLinked: "تم ربط التقويم بنجاح (محاكاة).",
+      smartCalendar: "التقويم الذكي",
+      filterAll: 'الكل',
+      filterMorning: 'صباحاً',
+      filterAfternoon: 'بعد الظهر',
+      filterEvening: 'مساءً',
+      week: "أسبوع",
+      day: "يوم",
+      addSession: "إضافة حصة",
+      generateSmartPlan: "توليد برنامج ذكي (بكالوريا)",
+      linkGoogle: "ربط مع Google",
+      periodMorning: 'الصباح (08:00 - 12:00)',
+      periodAfternoon: 'المساء (13:30 - 17:30)',
+      periodEvening: 'الليل (19:00 - 22:30)',
+      done: "تم الإنجاز",
+      completeSession: "إكمال الحصة",
+      freeSpace: "مساحة حرة",
+      newSession: "حصة جديدة",
+      addManualSession: "إضافة حصة مراجعة يدوياً",
+      title: "العنوان",
+      titlePlaceholder: "مثال: مراجعة الرياضيات - الدوال",
+      date: "التاريخ",
+      time: "الساعة",
+      durationMin: "المدة (دقائق)",
+      subject: "المادة",
+      subjectPlaceholder: "رياضيات، علوم، فيزياء...",
+      description: "الوصف",
+      descriptionPlaceholder: "تفاصيل الحصة والدروس المراد مراجعتها...",
+      cancel: "إلغاء",
+      add: "إضافة",
+      editSession: "تعديل الحصة",
+      saveChanges: "حفظ التغييرات"
+    }
+  };
+  const td = tDict[lang] || tDict.fr;
   
   const locales = { fr, ar: arDZ, en: enUS, es };
   const currentLocale = locales[lang] || fr;
@@ -214,8 +362,8 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
         // Notification
         await addDoc(collection(db, 'notifications'), {
           uid: userProfile.uid,
-          title: "Session terminée 🎉",
-          message: lang === 'ar' ? `لقد ربحت ${pointsEarned} نقطة!` : `Tu as gagné ${pointsEarned} points !`,
+          title: td.sessionCompletedTitle,
+          message: td.pointsEarnedMsg(pointsEarned),
           type: 'success',
           read: false,
           createdAt: new Date().toISOString()
@@ -278,7 +426,7 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
     // For now, we'll simulate a delay and show a message
     setTimeout(() => {
       setIsSyncing(false);
-      alert(lang === 'ar' ? "تم ربط التقويم بنجاح (محاكاة)." : "Calendrier lié avec succès (simulation).");
+      alert(td.calendarLinked);
     }, 2000);
   };
 
@@ -322,19 +470,19 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
           <div>
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-black text-slate-900 tracking-tight">
-                {lang === 'ar' ? "التقويم الذكي" : "Calendrier Intelligent"}
+                {td.smartCalendar}
               </h2>
               <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl ml-2">
                 {[
-                  { id: 'all', icon: Filter, label: { fr: 'Tout', ar: 'الكل' } },
-                  { id: 'morning', icon: Sun, label: { fr: 'Matin', ar: 'صباحاً' } },
-                  { id: 'afternoon', icon: CloudSun, label: { fr: 'A-M', ar: 'بعد الظهر' } },
-                  { id: 'evening', icon: Moon, label: { fr: 'Soir', ar: 'مساءً' } },
+                  { id: 'all', icon: Filter, label: td.filterAll },
+                  { id: 'morning', icon: Sun, label: td.filterMorning },
+                  { id: 'afternoon', icon: CloudSun, label: td.filterAfternoon },
+                  { id: 'evening', icon: Moon, label: td.filterEvening },
                 ].map((f) => (
                   <button
                     key={f.id}
                     onClick={() => setSelectedTimeFilter(f.id as any)}
-                    title={lang === 'ar' ? f.label.ar : f.label.fr}
+                    title={f.label}
                     className={cn(
                       "p-1.5 rounded-lg transition-all flex items-center gap-1.5",
                       selectedTimeFilter === f.id 
@@ -345,7 +493,7 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
                     <f.icon className="w-3.5 h-3.5" />
                     {selectedTimeFilter === f.id && (
                       <span className="text-[10px] font-bold pr-1">
-                        {lang === 'ar' ? f.label.ar : f.label.fr}
+                        {f.label}
                       </span>
                     )}
                   </button>
@@ -373,7 +521,7 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
               view === 'week' ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"
             )}
           >
-            {lang === 'ar' ? "أسبوع" : "Semaine"}
+            {td.week}
           </button>
           <button 
             onClick={() => setView('day')}
@@ -382,7 +530,7 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
               view === 'day' ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"
             )}
           >
-            {lang === 'ar' ? "يوم" : "Jour"}
+            {td.day}
           </button>
         </div>
 
@@ -391,7 +539,7 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
           className="flex items-center justify-center gap-2 bg-primary-600 text-white px-6 py-4 rounded-[24px] font-bold shadow-xl shadow-primary-100 hover:bg-primary-700 transition-all group"
         >
           <Plus className="w-5 h-5" />
-          {lang === 'ar' ? "إضافة حصة" : "Ajouter une session"}
+          {td.addSession}
         </button>
 
         <button
@@ -404,7 +552,7 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
           ) : (
             <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform" />
           )}
-          {lang === 'ar' ? "توليد برنامج ذكي (بكالوريا)" : "Générer planning IA (Bac)"}
+          {td.generateSmartPlan}
         </button>
 
         <button
@@ -417,7 +565,7 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
           ) : (
             <CalendarIconLucide className="w-5 h-5" />
           )}
-          {lang === 'ar' ? "ربط مع Google" : "Lier à Google"}
+          {td.linkGoogle}
         </button>
       </div>
 
@@ -487,9 +635,9 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
                       if (periodSessions.length === 0) return null;
 
                     const periodLabels = {
-                      morning: lang === 'ar' ? 'الصباح (08:00 - 12:00)' : 'Matin (08:00 - 12:00)',
-                      afternoon: lang === 'ar' ? 'المساء (13:30 - 17:30)' : 'Après-midi (13:30 - 17:30)',
-                      evening: lang === 'ar' ? 'الليل (19:00 - 22:30)' : 'Soir (19:00 - 22:30)'
+                      morning: td.periodMorning,
+                      afternoon: td.periodAfternoon,
+                      evening: td.periodEvening
                     };
 
                     return (
@@ -601,9 +749,9 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
                                 </AnimatePresence>
                                 <span className="relative z-10 font-black">
                                   {session.completed ? (
-                                    lang === 'ar' ? "تم الإنجاز" : "Terminé"
+                                    td.done
                                   ) : (
-                                    lang === 'ar' ? "إكمال الحصة" : "Compléter la session"
+                                    td.completeSession
                                   )}
                                 </span>
                               </button>
@@ -617,7 +765,7 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
                   <div className="h-full flex flex-col items-center justify-center py-12 bg-slate-50/50 rounded-3xl border border-dashed border-slate-100 opacity-60">
                     <Clock className="w-8 h-8 text-slate-200 mb-2" />
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                      {lang === 'ar' ? "مساحة حرة" : "Espace libre"}
+                      {td.freeSpace}
                     </p>
                   </div>
                 )}
@@ -646,10 +794,10 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
                   </div>
                   <div>
                     <h3 className="text-2xl font-black text-slate-900">
-                      {lang === 'ar' ? "حصة جديدة" : "Nouvelle Session"}
+                      {td.newSession}
                     </h3>
                     <p className="text-slate-500 text-sm">
-                      {lang === 'ar' ? "إضافة حصة مراجعة يدوياً" : "Ajoute manuellement une session"}
+                      {td.addManualSession}
                     </p>
                   </div>
                 </div>
@@ -658,20 +806,20 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
               <div className="space-y-4">
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
-                    {lang === 'ar' ? "العنوان" : "Titre"}
+                    {td.title}
                   </label>
                   <input 
                     type="text" 
                     value={manualSession.title}
                     onChange={(e) => setManualSession({...manualSession, title: e.target.value})}
                     className="w-full bg-slate-50 border-none rounded-2xl px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder={lang === 'ar' ? "مثال: مراجعة الرياضيات - الدوال" : "Ex: Révision Maths"}
+                    placeholder={td.titlePlaceholder}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
-                      {lang === 'ar' ? "التاريخ" : "Date"}
+                      {td.date}
                     </label>
                     <input 
                       type="date" 
@@ -682,7 +830,7 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
                   </div>
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
-                      {lang === 'ar' ? "الساعة" : "Heure"}
+                      {td.time}
                     </label>
                     <input 
                       type="time" 
@@ -695,7 +843,7 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
-                      {lang === 'ar' ? "المدة (دقائق)" : "Durée (min)"}
+                      {td.durationMin}
                     </label>
                     <input 
                       type="number" 
@@ -706,26 +854,26 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
                   </div>
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
-                      {lang === 'ar' ? "المادة" : "Matière"}
+                      {td.subject}
                     </label>
                     <input 
                       type="text" 
                       value={manualSession.subjectId}
                       onChange={(e) => setManualSession({...manualSession, subjectId: e.target.value})}
                       className="w-full bg-slate-50 border-none rounded-2xl px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-primary-500"
-                      placeholder={lang === 'ar' ? "رياضيات، علوم، فيزياء..." : "Maths, Physique..."}
+                      placeholder={td.subjectPlaceholder}
                     />
                   </div>
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
-                    {lang === 'ar' ? "الوصف" : "Description"}
+                    {td.description}
                   </label>
                   <textarea 
                     value={manualSession.description}
                     onChange={(e) => setManualSession({...manualSession, description: e.target.value})}
                     className="w-full bg-slate-50 border-none rounded-2xl px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-primary-500 h-24 resize-none"
-                    placeholder={lang === 'ar' ? "تفاصيل الحصة والدروس المراد مراجعتها..." : "Détails de la session..."}
+                    placeholder={td.descriptionPlaceholder}
                   />
                 </div>
 
@@ -734,13 +882,13 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
                     onClick={() => setShowForm(false)}
                     className="flex-1 py-4 rounded-2xl font-bold text-slate-500 hover:bg-slate-50 transition-all"
                   >
-                    {lang === 'ar' ? "إلغاء" : "Annuler"}
+                    {td.cancel}
                   </button>
                   <button
                     onClick={handleAddManualSession}
                     className="flex-1 py-4 bg-primary-600 text-white rounded-2xl font-bold shadow-lg shadow-primary-100 hover:bg-primary-700 transition-all"
                   >
-                    {lang === 'ar' ? "إضافة" : "Ajouter"}
+                    {td.add}
                   </button>
                 </div>
               </div>
@@ -768,7 +916,7 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
                   </div>
                   <div>
                     <h3 className="text-2xl font-black text-slate-900">
-                      {lang === 'ar' ? "تعديل الحصة" : "Modifier Session"}
+                      {td.editSession}
                     </h3>
                   </div>
                 </div>
@@ -777,7 +925,7 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
               <div className="space-y-4">
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
-                    {lang === 'ar' ? "العنوان" : "Titre"}
+                    {td.title}
                   </label>
                   <input 
                     type="text" 
@@ -789,7 +937,7 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
-                      {lang === 'ar' ? "التاريخ" : "Date"}
+                      {td.date}
                     </label>
                     <input 
                       type="date" 
@@ -800,7 +948,7 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
                   </div>
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
-                      {lang === 'ar' ? "الساعة" : "Heure"}
+                      {td.time}
                     </label>
                     <input 
                       type="time" 
@@ -813,7 +961,7 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
-                      {lang === 'ar' ? "المدة (دقائق)" : "Durée (min)"}
+                      {td.durationMin}
                     </label>
                     <input 
                       type="number" 
@@ -825,7 +973,7 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
-                    {lang === 'ar' ? "الوصف" : "Description"}
+                    {td.description}
                   </label>
                   <textarea 
                     value={editingSession.description}
@@ -839,13 +987,13 @@ export const StudyCalendar: React.FC<StudyCalendarProps> = ({ userProfile }) => 
                     onClick={() => setEditingSession(null)}
                     className="flex-1 py-4 rounded-2xl font-bold text-slate-500 hover:bg-slate-50 transition-all"
                   >
-                    {lang === 'ar' ? "إلغاء" : "Annuler"}
+                    {td.cancel}
                   </button>
                   <button
                     onClick={handleUpdateSession}
                     className="flex-1 py-4 bg-primary-600 text-white rounded-2xl font-bold shadow-lg shadow-primary-100 hover:bg-primary-700 transition-all"
                   >
-                    {lang === 'ar' ? "حفظ التغييرات" : "Enregistrer"}
+                    {td.saveChanges}
                   </button>
                 </div>
               </div>

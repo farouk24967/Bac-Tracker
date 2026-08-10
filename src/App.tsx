@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from './lib/firestoreUtils';
 import { updateStreak, checkXPProgression } from './lib/gamificationUtils';
 import { Auth } from './components/Auth';
@@ -16,6 +15,7 @@ import { Gamification } from './components/Gamification';
 import { Settings } from './components/Settings';
 import { Analytics } from './components/Analytics';
 import { AdminPanel } from './components/AdminPanel';
+import { BacHistory } from './components/BacHistory';
 import { MemoryBadge } from './components/MemoryBadge';
 import { useAutoStudyTime } from './hooks/useAutoStudyTime';
 import { DailyMotivation } from './components/DailyMotivation';
@@ -24,7 +24,8 @@ import { NotificationCenter } from './components/NotificationCenter';
 import { useNotifications } from './hooks/useNotifications';
 import { useReminders } from './hooks/useReminders';
 import { UserProfile, Language } from './types';
-import { translations } from './translations';
+import { safeT } from './translations';
+import { doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { cn } from './lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -41,7 +42,8 @@ import {
   Settings as SettingsIcon,
   BarChart3,
   Home,
-  ShieldCheck
+  ShieldCheck,
+  History
 } from 'lucide-react';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -54,8 +56,21 @@ const App: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isManualSessionActive, setIsManualSessionActive] = useState(false);
 
+  // Langue pilotée localement (optimiste) pour que le changement soit
+  // immédiat, puis persistée dans Firestore. Le snapshot confirme/synchronise.
   const lang: Language = profile?.language || 'fr';
-  const t = translations[lang];
+  const t = safeT(lang);
+
+  const changeLanguage = async (newLang: Language) => {
+    if (!user || !profile || newLang === lang) return;
+    try {
+      setProfile({ ...profile, language: newLang });
+      await updateDoc(doc(db, 'users', user.uid), { language: newLang });
+    } catch (error) {
+      console.error('[App] Erreur changement de langue :', error);
+      // Le snapshot Firestore finira par remettre l'ancienne langue si l'écriture échoue.
+    }
+  };
 
   const today = new Date();
   const startOfYear = new Date(today.getFullYear(), 0, 0);
@@ -67,13 +82,14 @@ const App: React.FC = () => {
   const getActiveTabInfo = () => {
     switch (activeTab) {
       case 'dashboard': return { label: t.dashboard, icon: LayoutDashboard };
-      case 'calendar': return { label: lang === 'ar' ? 'التقويم' : 'Calendrier', icon: Calendar };
+      case 'calendar': return { label: t.tab_calendar, icon: Calendar };
       case 'chatbot': return { label: t.chatbot, icon: MessageSquare };
       case 'resources': return { label: t.resources, icon: Library };
-      case 'average': return { label: lang === 'ar' ? 'حساب المعدل' : 'Moyenne', icon: Calculator };
+      case 'average': return { label: t.tab_average, icon: Calculator };
       case 'gamification': return { label: t.gamification, icon: Trophy };
-      case 'analytics': return { label: lang === 'ar' ? 'التحليلات' : 'Analytics', icon: BarChart3 };
-      case 'settings': return { label: lang === 'ar' ? 'الإعدادات' : 'Paramètres', icon: SettingsIcon };
+      case 'analytics': return { label: t.tab_analytics, icon: BarChart3 };
+      case 'history': return { label: t.tab_history, icon: History };
+      case 'settings': return { label: t.tab_settings, icon: SettingsIcon };
       case 'admin': return { label: 'Admin', icon: ShieldCheck };
       default: return { label: t.dashboard, icon: LayoutDashboard };
     }
@@ -233,6 +249,7 @@ const App: React.FC = () => {
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
         onOpen={() => setIsMobileMenuOpen(true)}
+        onChangeLanguage={changeLanguage}
       />
       
       <main className={cn(
@@ -272,13 +289,14 @@ const App: React.FC = () => {
               </h1>
               <p className="text-slate-500 mt-1 text-sm md:text-base">
                 {activeTab === 'dashboard' && t.study_day}
-                {activeTab === 'calendar' && (lang === 'ar' ? "نظم مراجعاتك بذكاء." : "Organise tes révisions intelligemment.")}
-                {activeTab === 'chatbot' && (lang === 'ar' ? "اطرح أسئلتك حول أي مادة." : "Pose tes questions sur n'importe quelle matière.")}
-                {activeTab === 'resources' && (lang === 'ar' ? "الوصول إلى المصادر التعليمية وأدوات الذكاء الاصطناعي." : "Accède aux ressources pédagogiques et outils d'IA.")}
-                {activeTab === 'average' && (lang === 'ar' ? "احسب معدلك بسهولة." : "Calcule ta moyenne facilement.")}
-                {activeTab === 'gamification' && (lang === 'ar' ? "اكتشف أوسمتك ومستواك الحالي." : "Découvre tes badges et ton niveau actuel.")}
-                {activeTab === 'analytics' && (lang === 'ar' ? "حلل أداءك وتقدمك." : "Analyse tes performances et tes progrès.")}
-                {activeTab === 'settings' && (lang === 'ar' ? "تخصيص تجربتك." : "Personnalise ton expérience.")}
+                {activeTab === 'calendar' && t.tab_sub_calendar}
+                {activeTab === 'chatbot' && t.tab_sub_chatbot}
+                {activeTab === 'resources' && t.tab_sub_resources}
+                {activeTab === 'average' && t.tab_sub_average}
+                {activeTab === 'gamification' && t.tab_sub_gamification}
+                {activeTab === 'analytics' && t.tab_sub_analytics}
+                {activeTab === 'history' && t.tab_sub_history}
+                {activeTab === 'settings' && t.tab_sub_settings}
               </p>
             </div>
 
@@ -336,6 +354,7 @@ const App: React.FC = () => {
             {activeTab === 'average' && <AverageCalculator userProfile={profile!} />}
             {activeTab === 'gamification' && <Gamification userProfile={profile!} />}
             {activeTab === 'analytics' && <Analytics userProfile={profile!} />}
+            {activeTab === 'history' && <BacHistory userProfile={profile!} onViewAnalytics={() => setActiveTab('analytics')} />}
             {activeTab === 'settings' && <Settings userProfile={profile!} />}
             {activeTab === 'admin' && <AdminPanel adminProfile={profile!} />}
           </motion.div>
@@ -350,7 +369,7 @@ const App: React.FC = () => {
             </p>
           </div>
           <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mt-4">
-            Bac Tracker © 2026 • Made with ❤️ for Algerian Students
+            Bac Tracker © {new Date().getFullYear()} • Made with ❤️ for Algerian Students
           </p>
         </footer>
       </main>

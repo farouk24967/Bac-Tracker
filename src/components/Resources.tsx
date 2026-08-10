@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Language, UserProfile, SubjectProgress, Stream, AITool, Resource } from '../types';
-import { translations } from '../translations';
+import { safeT } from '../translations';
 import { cn } from '../lib/utils';
 import { TEACHER_RESOURCES } from '../data/resourceData';
 import { SUBJECTS_BY_STREAM, AI_TOOLS, STREAMS } from '../constants';
@@ -238,7 +238,143 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
   const [selectedFileIndex, setSelectedFileIndex] = useState<number | null>(null);
 
   const lang: Language = userProfile.language || 'fr';
-  const t = translations[lang];
+  const t = safeT(lang);
+
+  const tDict = {
+    fr: {
+      catAll: 'Tout',
+      catYoutube: 'Chaînes YouTube',
+      catWebsites: 'Sites Web',
+      catApps: 'Applications',
+      catFiles: 'Fichiers & Résumés',
+      accessBestContent: "Accède aux meilleurs contenus.",
+      findFavorites: "Retrouve tes favoris.",
+      searchPlaceholder: "Rechercher un cours...",
+      subjectsLabel: 'Matières :',
+      clearAll: 'Effacer',
+      professorsLabel: 'Professeurs :',
+      downloadFile: "Télécharger le fichier",
+      watchVideo: "Voir la vidéo",
+      visitSite: "Visiter le site",
+      rerunAnalysis: "Relancer l'analyse",
+      addNotesForAnalysis: "Ajoute tes notes dans le tableau de bord pour permettre l'analyse.",
+      uploadFiles: "Charger des fichiers",
+      uploadDescription: "Charge tes cours ou résumés pour les utiliser avec l'IA.",
+      clickToUpload: "Clique pour uploader",
+      anyFormat: "Tous formats (PDF, DOCX, JPG...)",
+      selected: 'Sélectionné',
+      noFiles: "Aucun fichier",
+      flashcardSubtitle: "Crée des cartes de révision en un clic.",
+      flashcardTopicPlaceholder: "Sujet (ex: La mitose, Guerre de libération...)",
+      generating: 'Génération...',
+      resultLabel: 'Résultat',
+      summarySubtitle: "Des résumés structurés pour le Bac algérien.",
+      summaryTopicPlaceholder: "Sujet (ex: Limites et continuité, Les acides...)",
+      noResourceFound: "Aucune ressource trouvée",
+      starToSave: "Clique sur l'étoile pour sauvegarder tes ressources préférées.",
+      changeSearchCriteria: "Essaie de modifier tes critères de recherche."
+    },
+    en: {
+      catAll: 'All',
+      catYoutube: 'YouTube Channels',
+      catWebsites: 'Websites',
+      catApps: 'Apps',
+      catFiles: 'Files & Summaries',
+      accessBestContent: "Access the best educational content.",
+      findFavorites: "Find your favorites.",
+      searchPlaceholder: "Search for a lesson...",
+      subjectsLabel: 'Subjects:',
+      clearAll: 'Clear',
+      professorsLabel: 'Professors:',
+      downloadFile: "Download the file",
+      watchVideo: "Watch the video",
+      visitSite: "Visit the site",
+      rerunAnalysis: "Rerun analysis",
+      addNotesForAnalysis: "Add your grades in the dashboard to allow the analysis.",
+      uploadFiles: "Upload files",
+      uploadDescription: "Upload your lessons or summaries to use them with the AI.",
+      clickToUpload: "Click to upload",
+      anyFormat: "Any format (PDF, DOCX, JPG...)",
+      selected: 'Selected',
+      noFiles: "No files",
+      flashcardSubtitle: "Create revision flashcards in one click.",
+      flashcardTopicPlaceholder: "Topic (e.g. Mitosis, Liberation War...)",
+      generating: 'Generating...',
+      resultLabel: 'Result',
+      summarySubtitle: "Structured summaries for the Algerian Bac.",
+      summaryTopicPlaceholder: "Topic (e.g. Limits and continuity, Acids...)",
+      noResourceFound: "No resource found",
+      starToSave: "Click the star to save your favorite resources.",
+      changeSearchCriteria: "Try changing your search criteria."
+    },
+    es: {
+      catAll: 'Todo',
+      catYoutube: 'Canales de YouTube',
+      catWebsites: 'Sitios web',
+      catApps: 'Aplicaciones',
+      catFiles: 'Archivos y resúmenes',
+      accessBestContent: "Accede al mejor contenido educativo.",
+      findFavorites: "Encuentra tus favoritos.",
+      searchPlaceholder: "Buscar una lección...",
+      subjectsLabel: 'Materias:',
+      clearAll: 'Borrar',
+      professorsLabel: 'Profesores:',
+      downloadFile: "Descargar el archivo",
+      watchVideo: "Ver el video",
+      visitSite: "Visitar el sitio",
+      rerunAnalysis: "Repetir el análisis",
+      addNotesForAnalysis: "Añade tus notas en el panel para permitir el análisis.",
+      uploadFiles: "Subir archivos",
+      uploadDescription: "Sube tus lecciones o resúmenes para usarlos con la IA.",
+      clickToUpload: "Haz clic para subir",
+      anyFormat: "Cualquier formato (PDF, DOCX, JPG...)",
+      selected: 'Seleccionado',
+      noFiles: "Sin archivos",
+      flashcardSubtitle: "Crea tarjetas de repaso con un clic.",
+      flashcardTopicPlaceholder: "Tema (p. ej. mitosis, guerra de liberación...)",
+      generating: 'Generando...',
+      resultLabel: 'Resultado',
+      summarySubtitle: "Resúmenes estructurados para el Bachillerato argelino.",
+      summaryTopicPlaceholder: "Tema (p. ej. límites y continuidad, ácidos...)",
+      noResourceFound: "No se encontró ningún recurso",
+      starToSave: "Haz clic en la estrella para guardar tus recursos favoritos.",
+      changeSearchCriteria: "Intenta cambiar tus criterios de búsqueda."
+    },
+    ar: {
+      catAll: 'الكل',
+      catYoutube: 'قنوات يوتيوب',
+      catWebsites: 'مواقع تعليمية',
+      catApps: 'تطبيقات',
+      catFiles: 'ملخصات و ملفات',
+      accessBestContent: "الوصول إلى أفضل المحتويات التعليمية.",
+      findFavorites: "المصادر التي فضلتها.",
+      searchPlaceholder: "البحث عن درس...",
+      subjectsLabel: 'المواد:',
+      clearAll: 'مسح الكل',
+      professorsLabel: 'الأساتذة:',
+      downloadFile: "تحميل الملف",
+      watchVideo: "مشاهدة الفيديو",
+      visitSite: "زيارة الموقع",
+      rerunAnalysis: "إعادة التحليل",
+      addNotesForAnalysis: "أضف علاماتك في لوحة التحكم للسماح بالتحليل.",
+      uploadFiles: "رفع الملفات",
+      uploadDescription: "ارفع دروسك أو ملخصاتك لاستخدامها مع الذكاء الاصطناعي.",
+      clickToUpload: "اضغط للرفع",
+      anyFormat: "أي صيغة (PDF, DOCX, JPG...)",
+      selected: 'مختار',
+      noFiles: "لا توجد ملفات",
+      flashcardSubtitle: "أنشئ بطاقات مراجعة بنقرة واحدة.",
+      flashcardTopicPlaceholder: "الموضوع (مثال: الانقسام الخيطي، ثورة التحرير...)",
+      generating: 'جاري التوليد...',
+      resultLabel: 'النتيجة',
+      summarySubtitle: "ملخصات منظمة للبكالوريا الجزائرية.",
+      summaryTopicPlaceholder: "الموضوع (مثال: النهايات والاتصال، الأحماض...)",
+      noResourceFound: "لم يتم العثور على أي مصدر",
+      starToSave: "اضغط على النجمة لحفظ مصادرك المفضلة.",
+      changeSearchCriteria: "حاول تغيير معايير البحث الخاصة بك."
+    }
+  };
+  const td = tDict[lang] || tDict.fr;
 
   const streamRaw = (userProfile.stream || STREAMS[0]).trim();
   const stream = STREAMS.find(s => s === streamRaw || s.toLowerCase() === streamRaw.toLowerCase()) || STREAMS[0];
@@ -437,11 +573,11 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
       {category === 'profs' && (
         <div className="flex flex-wrap gap-2 md:gap-3">
           {[
-            { id: 'all', label: lang === 'ar' ? 'الكل' : 'Tout', icon: Layers },
-            { id: 'youtube', label: lang === 'ar' ? 'قنوات يوتيوب' : 'Chaînes YouTube', icon: Video },
-            { id: 'website', label: lang === 'ar' ? 'مواقع تعليمية' : 'Sites Web', icon: ExternalLink },
-            { id: 'app', label: lang === 'ar' ? 'تطبيقات' : 'Applications', icon: Smartphone },
-            { id: 'file', label: lang === 'ar' ? 'ملخصات و ملفات' : 'Fichiers & Résumés', icon: FileText },
+            { id: 'all', label: td.catAll, icon: Layers },
+            { id: 'youtube', label: td.catYoutube, icon: Video },
+            { id: 'website', label: td.catWebsites, icon: ExternalLink },
+            { id: 'app', label: td.catApps, icon: Smartphone },
+            { id: 'file', label: td.catFiles, icon: FileText },
           ].map(cat => (
             <button
               key={cat.id}
@@ -467,8 +603,8 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
           </h2>
           <p className="text-slate-500 mt-1 text-xs md:text-base">
             {viewMode === 'all' 
-              ? (lang === 'ar' ? "الوصول إلى أفضل المحتويات التعليمية." : "Accède aux meilleurs contenus.")
-              : (lang === 'ar' ? "المصادر التي فضلتها." : "Retrouve tes favoris.")
+              ? td.accessBestContent
+              : td.findFavorites
             }
           </p>
         </div>
@@ -505,7 +641,7 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
               type="text"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              placeholder={lang === 'ar' ? "البحث عن درس..." : "Rechercher un cours..."}
+              placeholder={td.searchPlaceholder}
               className={cn(
                 "py-3 rounded-2xl bg-white border border-slate-100 shadow-sm focus:ring-2 focus:ring-primary-500 outline-none w-full sm:w-64",
                 lang === 'ar' ? "pr-12 pl-6" : "pl-12 pr-6"
@@ -538,7 +674,7 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
             <div className="flex items-center gap-2 mr-2 text-slate-400">
               <Filter className="w-4 h-4" />
               <span className="text-xs font-bold uppercase tracking-wider">
-                {lang === 'ar' ? 'المواد:' : 'Matières :'}
+                {td.subjectsLabel}
               </span>
             </div>
             {allowedSubjects.map(subject => (
@@ -560,7 +696,7 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
                 onClick={() => setSelectedSubjects([])}
                 className="px-4 py-2 rounded-full text-sm font-bold text-red-500 hover:bg-red-50 transition-all"
               >
-                {lang === 'ar' ? 'مسح الكل' : 'Effacer'}
+                {td.clearAll}
               </button>
             )}
           </div>
@@ -569,7 +705,7 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
             <div className="flex items-center gap-2 mr-2 text-slate-400">
               <GraduationCap className="w-4 h-4" />
               <span className="text-xs font-bold uppercase tracking-wider">
-                {lang === 'ar' ? 'الأساتذة:' : 'Professeurs :'}
+                {td.professorsLabel}
               </span>
             </div>
             {professors.map(professor => (
@@ -591,7 +727,7 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
                 onClick={() => setSelectedProfessors([])}
                 className="px-4 py-2 rounded-full text-sm font-bold text-red-500 hover:bg-red-50 transition-all"
               >
-                {lang === 'ar' ? 'مسح الكل' : 'Effacer'}
+                {td.clearAll}
               </button>
             )}
           </div>
@@ -663,9 +799,9 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
                       onClick={handleResourceClick}
                       className="w-full flex items-center justify-center gap-2 bg-slate-50 text-slate-700 font-bold py-3 rounded-2xl hover:bg-primary-600 hover:text-white transition-all group/btn"
                     >
-                      {resource.type === 'pdf' ? (lang === 'ar' ? "تحميل الملف" : "Télécharger le fichier") : 
-                       resource.type === 'video' ? (lang === 'ar' ? "مشاهدة الفيديو" : "Voir la vidéo") :
-                       (lang === 'ar' ? "زيارة الموقع" : "Visiter le site")}
+                      {resource.type === 'pdf' ? td.downloadFile : 
+                       resource.type === 'video' ? td.watchVideo :
+                       td.visitSite}
                       <ChevronRight className={cn(
                         "w-4 h-4 transition-transform",
                         lang === 'ar' ? "rotate-180 group-hover/btn:-translate-x-1" : "group-hover/btn:translate-x-1"
@@ -698,7 +834,7 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
                 className="flex items-center justify-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-primary-700 transition-all disabled:opacity-50 shadow-lg shadow-primary-100 w-full sm:w-auto"
               >
                 {isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
-                {analysis ? (lang === 'ar' ? 'إعادة التحليل' : 'Relancer l\'analyse') : t.analyze_notes}
+                {analysis ? td.rerunAnalysis : t.analyze_notes}
               </button>
             </div>
 
@@ -718,7 +854,7 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
               {!analysis && !isAnalyzing && progress.length === 0 && (
                 <div className="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                   <p className="text-slate-400">
-                    {lang === 'ar' ? "أضف علاماتك في لوحة التحكم للسماح بالتحليل." : "Ajoute tes notes dans le tableau de bord pour permettre l'analyse."}
+                    {td.addNotesForAnalysis}
                   </p>
                 </div>
               )}
@@ -732,9 +868,9 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
                 <Upload className="w-6 h-6 text-primary-600" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-900">{lang === 'ar' ? "رفع الملفات" : "Charger des fichiers"}</h3>
+                <h3 className="text-xl font-bold text-slate-900">{td.uploadFiles}</h3>
                 <p className="text-slate-500 text-sm">
-                  {lang === 'ar' ? "ارفع دروسك أو ملخصاتك لاستخدامها مع الذكاء الاصطناعي." : "Charge tes cours ou résumés pour les utiliser avec l'IA."}
+                  {td.uploadDescription}
                 </p>
               </div>
             </div>
@@ -744,8 +880,8 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
                 <div className="bg-white p-4 rounded-2xl shadow-sm group-hover:scale-110 transition-transform mb-4">
                   <Upload className="w-8 h-8 text-primary-600" />
                 </div>
-                <p className="font-bold text-slate-900 mb-1">{lang === 'ar' ? "اضغط للرفع" : "Clique pour uploader"}</p>
-                <p className="text-xs text-slate-400">{lang === 'ar' ? "أي صيغة (PDF, DOCX, JPG...)" : "Tous formats (PDF, DOCX, JPG...)"}</p>
+                <p className="font-bold text-slate-900 mb-1">{td.clickToUpload}</p>
+                <p className="text-xs text-slate-400">{td.anyFormat}</p>
                 <input type="file" multiple className="hidden" onChange={handleFileUpload} />
               </label>
 
@@ -779,7 +915,7 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
                     <div className="flex items-center gap-2">
                       {selectedFileIndex === idx && (
                         <span className="text-[10px] font-black text-primary-600 uppercase tracking-widest bg-primary-100 px-2 py-1 rounded-md">
-                          {lang === 'ar' ? 'مختار' : 'Sélectionné'}
+                          {td.selected}
                         </span>
                       )}
                       <button 
@@ -796,7 +932,7 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
                 )) : (
                   <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-slate-50 rounded-[32px] border border-dashed border-slate-200">
                     <File className="w-8 h-8 text-slate-200 mb-2" />
-                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{lang === 'ar' ? "لا توجد ملفات" : "Aucun fichier"}</p>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{td.noFiles}</p>
                   </div>
                 )}
               </div>
@@ -812,7 +948,7 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
                 <div>
                   <h3 className="text-xl font-bold text-slate-900">{t.flashcards}</h3>
                   <p className="text-slate-500 text-sm">
-                    {lang === 'ar' ? "أنشئ بطاقات مراجعة بنقرة واحدة." : "Crée des cartes de révision en un clic."}
+                    {td.flashcardSubtitle}
                   </p>
                 </div>
               </div>
@@ -838,7 +974,7 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
                     type="text"
                     value={flashcardTopic}
                     onChange={(e) => setFlashcardTopic(e.target.value)}
-                    placeholder={lang === 'ar' ? "الموضوع (مثال: الانقسام الخيطي، ثورة التحرير...)" : "Sujet (ex: La mitose, Guerre de libération...)"}
+                    placeholder={td.flashcardTopicPlaceholder}
                     className="flex-1 bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-amber-500 outline-none"
                   />
                   <button
@@ -847,7 +983,7 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
                     className="bg-amber-600 text-white px-6 py-4 rounded-2xl font-bold hover:bg-amber-700 transition-all disabled:opacity-50 shadow-lg shadow-amber-100 w-full sm:w-auto flex items-center justify-center gap-2"
                   >
                     {isGeneratingFlashcards ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
-                    {isGeneratingFlashcards ? (lang === 'ar' ? 'جاري التوليد...' : 'Génération...') : t.generate}
+                    {isGeneratingFlashcards ? td.generating : t.generate}
                   </button>
                 </div>
               </div>
@@ -860,7 +996,7 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
                     className="flex-1 flex flex-col"
                   >
                     <div className="flex items-center justify-between mb-4 px-1">
-                      <h4 className="text-sm font-bold text-slate-900">Résultat</h4>
+                      <h4 className="text-sm font-bold text-slate-900">{td.resultLabel}</h4>
                       <div className="flex items-center gap-2">
                         <div className="flex items-center bg-slate-100 rounded-xl p-1">
                           <button
@@ -902,7 +1038,7 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
                 <div>
                   <h3 className="text-xl font-bold text-slate-900">{t.summary}</h3>
                   <p className="text-slate-500 text-sm">
-                    {lang === 'ar' ? "ملخصات منظمة للبكالوريا الجزائرية." : "Des résumés structurés pour le Bac algérien."}
+                    {td.summarySubtitle}
                   </p>
                 </div>
               </div>
@@ -928,7 +1064,7 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
                     type="text"
                     value={summaryTopic}
                     onChange={(e) => setSummaryTopic(e.target.value)}
-                    placeholder={lang === 'ar' ? "الموضوع (مثال: النهايات والاتصال، الأحماض...)" : "Sujet (ex: Limites et continuité, Les acides...)"}
+                    placeholder={td.summaryTopicPlaceholder}
                     className="flex-1 bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
                   />
                   <button
@@ -937,7 +1073,7 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
                     className="bg-purple-600 text-white px-6 py-4 rounded-2xl font-bold hover:bg-purple-700 transition-all disabled:opacity-50 shadow-lg shadow-purple-100 w-full sm:w-auto flex items-center justify-center gap-2"
                   >
                     {isGeneratingSummary ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileText className="w-5 h-5" />}
-                    {isGeneratingSummary ? (lang === 'ar' ? 'جاري التوليد...' : 'Génération...') : t.generate}
+                    {isGeneratingSummary ? td.generating : t.generate}
                   </button>
                 </div>
               </div>
@@ -950,7 +1086,7 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
                     className="flex-1 flex flex-col"
                   >
                     <div className="flex items-center justify-between mb-4 px-1">
-                      <h4 className="text-sm font-bold text-slate-900">Résultat</h4>
+                      <h4 className="text-sm font-bold text-slate-900">{td.resultLabel}</h4>
                       <div className="flex items-center gap-2">
                         <div className="flex items-center bg-slate-100 rounded-xl p-1">
                           <button
@@ -1091,12 +1227,12 @@ export const Resources: React.FC<ResourcesProps> = ({ userProfile }) => {
             {viewMode === 'favorites' ? <Star className="w-8 h-8 text-slate-300" /> : <BookOpen className="w-8 h-8 text-slate-300" />}
           </div>
           <h3 className="text-xl font-bold text-slate-900">
-            {viewMode === 'favorites' ? t.no_favorites : (lang === 'ar' ? "لم يتم العثور على أي مصدر" : "Aucune ressource trouvée")}
+            {viewMode === 'favorites' ? t.no_favorites : td.noResourceFound}
           </h3>
           <p className="text-slate-500">
             {viewMode === 'favorites' 
-              ? (lang === 'ar' ? "اضغط على النجمة لحفظ مصادرك المفضلة." : "Clique sur l'étoile pour sauvegarder tes ressources préférées.")
-              : (lang === 'ar' ? "حاول تغيير معايير البحث الخاصة بك." : "Essaie de modifier tes critères de recherche.")
+              ? td.starToSave
+              : td.changeSearchCriteria
             }
           </p>
         </div>

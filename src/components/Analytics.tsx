@@ -47,16 +47,202 @@ import { generateDailyReport } from '../services/geminiService';
 import Markdown from 'react-markdown';
 import { ActivityHeatmap } from './ActivityHeatmap';
 
-// --- Sub-components moved to top to avoid ReferenceErrors ---
+
+  const tDict = {
+    fr: {
+      title: "Analytics & Performance",
+      progression: "Progression par matière",
+      discipline: "Discipline Journalière",
+      studyTime: "Temps d'étude",
+      studyTimeWeekly: "Evolution Hebdomadaire du temps d'étude",
+      goalVsReality: "Objectif vs Réalité",
+      streak: "Ta Continuité (Streak)",
+      neglected: "Matières Négligées",
+      prioritize: "Tu dois prioriser les matières en rouge",
+      irregular: "Tu as été irrégulier cette semaine",
+      increase: "Tu dois augmenter ton temps d'étude",
+      far: "Tu es encore loin de ton objectif",
+      dontBreak: "Ne casse pas ta streak !",
+      neglecting: "Tu négliges certaines matières",
+      day: "Jour",
+      week: "Semaine",
+      month: "Mois",
+      subtitle: "Analyse tes efforts pour mieux réussir.",
+      notesTitle: "Mes Notes (Moyennes)",
+      notesDesc: "Saisis tes notes pour affiner tes analyses.",
+      saveNotes: "Enregistrer les notes",
+      memoryTitle: "Mémoire des Activités",
+      completedLog: (title: string) => `Terminé : ${title}`,
+      resetAll: "Tout réinitialiser",
+      todayStudyTime: "Temps d'étude aujourd'hui",
+      monthlyEvolution: "Évolution mensuelle du temps d'étude",
+      hourAbbr: 'h',
+      balanceTitle: 'Équilibre des Matières',
+      balanceDesc: 'Visualise la maîtrise de chacune de tes matières.',
+      timeBySubject: 'Temps par Matière',
+      weakSubjects: 'Matières Faibles',
+      aiReportTitle: "Rapport IA Quotidien",
+      aiReportDesc: "Analyse intelligente de ta journée d'étude.",
+      generateReport: "Générer le rapport",
+      clickGenerate: "Clique sur le bouton ci-dessus pour analyser tes activités du jour.",
+      noActivity: "Aucune activité enregistrée aujourd.hui pour le moment.",
+      noMemory: "Aucun souvenir enregistré.",
+      totalLabel: "Total",
+      daysLabel: "Jours",
+      daysWithoutReview: (d: number) => `${d} jours sans révision`,
+      allUpToDate: "Toutes les matières sont à jour !",
+      noWeakSubjects: "Aucune matière marquée comme faible.",
+      mastery: "Maîtrise"
+    },
+    ar: {
+      title: "التحليلات والأداء",
+      progression: "التقدم حسب المادة",
+      discipline: "الانضباط اليومي",
+      studyTime: "وقت الدراسة",
+      studyTimeWeekly: "تطور وقت الدراسة الأسبوعي",
+      goalVsReality: "الهدف مقابل الواقع",
+      streak: "استمراريتك (Streak)",
+      neglected: "المواد المهملة",
+      prioritize: "يجب عليك إعطاء الأولوية للمواد باللون الأحمر",
+      irregular: "لقد كنت غير منتظم هذا الأسبوع",
+      increase: "يجب عليك زيادة وقت دراستك",
+      far: "لا تزال بعيداً عن هدفك",
+      dontBreak: "لا تكسر السلسلة!",
+      neglecting: "أنت تهمل بعض المواد",
+      day: "يوم",
+      week: "أسبوع",
+      month: "شهر",
+      subtitle: "حلل جهودك لتحقق النجاح بشكل أفضل.",
+      notesTitle: "نقاطي (معدلات المواد)",
+      notesDesc: "أدخل نقاطك في كل مادة لحساب معدلك العام.",
+      saveNotes: "حفظ النقاط",
+      memoryTitle: "ذاكرة الأنشطة",
+      completedLog: (title: string) => `أكملت: ${title}`,
+      resetAll: "إعادة ضبط الكل",
+      todayStudyTime: 'وقت الدراسة اليوم',
+      monthlyEvolution: 'تطور وقت الدراسة الشهري',
+      hourAbbr: 'ساعة',
+      balanceTitle: 'توازن المواد',
+      balanceDesc: 'هنا ترى توزيع قوتك في جميع المواد.',
+      timeBySubject: 'توزيع الوقت',
+      weakSubjects: 'مواد ضعيفة',
+      aiReportTitle: "تقرير الذكاء الاصطناعي اليومي",
+      aiReportDesc: "تحليل ذكي ليومك الدراسي.",
+      generateReport: "توليد التقرير",
+      clickGenerate: "اضغط على الزر أعلاه لتحليل أنشطتك اليومية.",
+      noActivity: "لم يتم تسجيل أي نشاط اليوم بعد.",
+      noMemory: "لم يتم تسجيل أي ذكريات بعد.",
+      totalLabel: "المجموع",
+      daysLabel: "أيام",
+      daysWithoutReview: (d: number) => `${d} يوم بدون مراجعة`,
+      allUpToDate: "جميع المواد محدّثة!",
+      noWeakSubjects: "لم يتم تحديد أي مادة ضعيفة.",
+      mastery: "الإتقان"
+    },
+    en: {
+      title: "Analytics & Performance",
+      progression: "Progress by subject",
+      discipline: "Daily Discipline",
+      studyTime: "Study time",
+      studyTimeWeekly: "Weekly evolution of study time",
+      goalVsReality: "Goal vs Reality",
+      streak: "Your Streak",
+      neglected: "Neglected Subjects",
+      prioritize: "You must prioritize the subjects in red",
+      irregular: "You have been irregular this week",
+      increase: "You need to increase your study time",
+      far: "You are still far from your goal",
+      dontBreak: "Don't break your streak!",
+      neglecting: "You are neglecting some subjects",
+      day: "Day",
+      week: "Week",
+      month: "Month",
+      subtitle: "Analyze your efforts to succeed better.",
+      notesTitle: "My Grades (Averages)",
+      notesDesc: "Enter your grades to refine your analyses.",
+      saveNotes: "Save grades",
+      memoryTitle: "Activity Memory",
+      completedLog: (title: string) => `Completed: ${title}`,
+      resetAll: "Reset everything",
+      todayStudyTime: "Today's study time",
+      monthlyEvolution: "Monthly evolution of study time",
+      hourAbbr: 'h',
+      balanceTitle: 'Subject Balance',
+      balanceDesc: 'Here you can see your strength distribution across subjects.',
+      timeBySubject: 'Time per Subject',
+      weakSubjects: 'Weak Subjects',
+      aiReportTitle: "Daily AI Report",
+      aiReportDesc: "Smart analysis of your study day.",
+      generateReport: "Generate report",
+      clickGenerate: "Click the button above to analyze your daily activities.",
+      noActivity: "No activity recorded today yet.",
+      noMemory: "No memories recorded yet.",
+      totalLabel: "Total",
+      daysLabel: "Days",
+      daysWithoutReview: (d: number) => `${d} days without review`,
+      allUpToDate: "All subjects are up to date!",
+      noWeakSubjects: "No subject marked as weak.",
+      mastery: "Mastery"
+    },
+    es: {
+      title: "Analíticas y Rendimiento",
+      progression: "Progreso por materia",
+      discipline: "Disciplina Diaria",
+      studyTime: "Tiempo de estudio",
+      studyTimeWeekly: "Evolución semanal del tiempo de estudio",
+      goalVsReality: "Objetivo vs Realidad",
+      streak: "Tu Racha",
+      neglected: "Materias Descuidadas",
+      prioritize: "Debes priorizar las materias en rojo",
+      irregular: "Has sido irregular esta semana",
+      increase: "Debes aumentar tu tiempo de estudio",
+      far: "Aún estás lejos de tu objetivo",
+      dontBreak: "¡No rompas tu racha!",
+      neglecting: "Estás descuidando algunas materias",
+      day: "Día",
+      week: "Semana",
+      month: "Mes",
+      subtitle: "Analiza tus esfuerzos para tener más éxito.",
+      notesTitle: "Mis Notas (Promedios)",
+      notesDesc: "Introduce tus notas para afinar tus análisis.",
+      saveNotes: "Guardar notas",
+      memoryTitle: "Memoria de Actividades",
+      completedLog: (title: string) => `Completado: ${title}`,
+      resetAll: "Restablecer todo",
+      todayStudyTime: "Tiempo de estudio de hoy",
+      monthlyEvolution: "Evolución mensual del tiempo de estudio",
+      hourAbbr: 'h',
+      balanceTitle: 'Equilibrio de Materias',
+      balanceDesc: 'Aquí ves la distribución de tu fuerza en todas las materias.',
+      timeBySubject: 'Tiempo por Materia',
+      weakSubjects: 'Materias Débiles',
+      aiReportTitle: "Informe IA Diario",
+      aiReportDesc: "Análisis inteligente de tu día de estudio.",
+      generateReport: "Generar informe",
+      clickGenerate: "Haz clic en el botón de arriba para analizar tus actividades diarias.",
+      noActivity: "Aún no se ha registrado ninguna actividad hoy.",
+      noMemory: "Aún no hay recuerdos registrados.",
+      totalLabel: "Total",
+      daysLabel: "Días",
+      daysWithoutReview: (d: number) => `${d} días sin repaso`,
+      allUpToDate: "¡Todas las materias están al día!",
+      noWeakSubjects: "Ninguna materia marcada como débil.",
+      mastery: "Dominio"
+    }
+  };
+
+interface AnalyticsProps {
+  userProfile: UserProfile;
+}
 
 const GradeManager: React.FC<{ userProfile: UserProfile, lang: Language, stream: string, subjects: string[] }> = ({ userProfile, lang, stream, subjects }) => {
   const [localGrades, setLocalGrades] = useState<Record<string, number>>(userProfile.currentGrades || {});
   const [isSaving, setIsSaving] = useState(false);
+  const t = tDict[lang] || tDict.fr;
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Calculate weighted average
       const streamCoeffs = COEFFICIENTS[stream] || {};
       let totalWeightedGrade = 0;
       let totalCoeffs = 0;
@@ -95,10 +281,10 @@ const GradeManager: React.FC<{ userProfile: UserProfile, lang: Language, stream:
           </div>
           <div>
             <h3 className="text-xl font-black text-slate-900">
-              {lang === 'ar' ? "نقاطي (معدلات المواد)" : "Mes Notes (Moyennes)"}
+              {t.notesTitle}
             </h3>
             <p className="text-slate-500 text-sm">
-              {lang === 'ar' ? "أدخل نقاطك في كل مادة لحساب معدلك العام." : "Saisis tes notes pour affiner tes analyses."}
+              {t.notesDesc}
             </p>
           </div>
         </div>
@@ -108,7 +294,7 @@ const GradeManager: React.FC<{ userProfile: UserProfile, lang: Language, stream:
           className="flex items-center justify-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-slate-800 transition-all disabled:opacity-50 shadow-xl"
         >
           {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          {lang === 'ar' ? "حفظ النقاط" : "Enregistrer les notes"}
+          {t.saveNotes}
         </button>
       </div>
 
@@ -144,6 +330,8 @@ const GradeManager: React.FC<{ userProfile: UserProfile, lang: Language, stream:
 
 const ActivityMemory: React.FC<{ userProfile: UserProfile, lang: Language }> = ({ userProfile, lang }) => {
   const [logs, setLogs] = useState<any[]>([]);
+  const t = tDict[lang] || tDict.fr;
+  const locale = lang === 'ar' ? 'ar-EG' : lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'fr-FR';
 
   useEffect(() => {
     const path = 'activityLog';
@@ -154,7 +342,7 @@ const ActivityMemory: React.FC<{ userProfile: UserProfile, lang: Language }> = (
       limit(10)
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setLogs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setLogs(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, path);
     });
@@ -162,7 +350,7 @@ const ActivityMemory: React.FC<{ userProfile: UserProfile, lang: Language }> = (
   }, [userProfile.uid]);
 
   const today = new Date();
-  const dateStr = today.toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'fr-FR', { 
+  const dateStr = today.toLocaleDateString(locale, { 
     weekday: 'long', 
     day: 'numeric', 
     month: 'long' 
@@ -179,44 +367,31 @@ const ActivityMemory: React.FC<{ userProfile: UserProfile, lang: Language }> = (
           <div className="bg-emerald-50 p-3 rounded-2xl text-emerald-600">
             <History className="w-6 h-6" />
           </div>
-          <h3 className="text-xl font-black text-slate-900">{lang === 'ar' ? "ذاكرة الأنشطة" : "Mémoire des Activités"}</h3>
+          <h3 className="text-xl font-black text-slate-900">{t.memoryTitle}</h3>
         </div>
         <span className="text-xs font-bold text-slate-400">{dateStr}</span>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {logs.length > 0 ? logs.map(log => (
           <div key={log.id} className="flex items-start gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
             <div className="bg-white p-2 rounded-xl shadow-sm mt-1">
-              {log.type === 'task_completed' ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              ) : (
-                <Clock className="w-4 h-4 text-primary-600" />
-              )}
+              {log.type === 'task_completed' ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Zap className="w-4 h-4 text-primary-600" />}
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-800 leading-tight">
-                {log.type === 'task_completed' 
-                  ? (lang === 'ar' ? `أكملت: ${log.title}` : `Terminé : ${log.title}`)
-                  : log.title
-                }
-              </p>
+              <p className="text-sm font-bold text-slate-800 leading-tight">{log.type === 'task_completed' ? t.completedLog(log.title) : log.title}</p>
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{log.subject}</span>
                 <span className="text-[10px] text-slate-300">•</span>
-                <span className="text-[10px] text-emerald-600 font-bold">
-                  +{log.xpEarned || 0} XP
-                </span>
+                <span className="text-[10px] text-emerald-600 font-bold">+{log.xpEarned || 0} XP</span>
                 <span className="text-[10px] text-slate-300">•</span>
-                <span className="text-[10px] text-slate-400">
-                  {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
+                <span className="text-[10px] text-slate-400">{new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
             </div>
           </div>
         )) : (
           <div className="col-span-2 text-center py-12">
-            <p className="text-slate-400 font-medium italic">Aucun souvenir enregistré.</p>
+            <p className="text-slate-400 font-medium italic">{t.noMemory}</p>
           </div>
         )}
       </div>
@@ -224,30 +399,24 @@ const ActivityMemory: React.FC<{ userProfile: UserProfile, lang: Language }> = (
   );
 };
 
-// --- End of Sub-components ---
-interface AnalyticsProps {
-  userProfile: UserProfile;
-}
-
 export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
-  const [progress, setProgress] = useState<SubjectProgress[]>([]);
+  const [subjectProgress, setSubjectProgress] = useState<SubjectProgress[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [studySessions, setStudySessions] = useState<any[]>([]);
   const [dailyReport, setDailyReport] = useState<string | null>(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [todayActivities, setTodayActivities] = useState<any[]>([]);
   const [timeRange, setTimeRange] = useState<'day' | 'week' | 'month'>('week');
-
   const lang: Language = userProfile.language || 'fr';
-  const streamRaw = (userProfile.stream || STREAMS[0]).trim();
-  const stream = STREAMS.find(s => s === streamRaw || s.toLowerCase() === streamRaw.toLowerCase()) || STREAMS[0];
+  const rawStream = (userProfile.stream || STREAMS[0]).trim();
+  const stream = STREAMS.find(s => s === rawStream || s.toLowerCase() === rawStream.toLowerCase()) || STREAMS[0];
   const subjects = SUBJECTS_BY_STREAM[stream] || [];
 
   useEffect(() => {
     const path = 'subjectProgress';
     const q = query(collection(db, path), where('uid', '==', userProfile.uid));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setProgress(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SubjectProgress)));
+      setSubjectProgress(snapshot.docs.map(d => ({ id: d.id, ...d.data() }) as SubjectProgress));
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, path);
     });
@@ -256,14 +425,9 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
 
   useEffect(() => {
     const path = 'tasks';
-    const q = query(
-      collection(db, path), 
-      where('uid', '==', userProfile.uid),
-      orderBy('dueDate', 'desc'),
-      limit(50)
-    );
+    const q = query(collection(db, path), where('uid', '==', userProfile.uid), orderBy('dueDate', 'desc'), limit(50));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setTasks(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Task)));
+      setTasks(snapshot.docs.map(d => ({ id: d.id, ...d.data() }) as Task));
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, path);
     });
@@ -272,15 +436,9 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
 
   useEffect(() => {
     const path = 'studySessions';
-    const q = query(
-      collection(db, path), 
-      where('uid', '==', userProfile.uid),
-      orderBy('date', 'desc'),
-      limit(150)
-    );
-
+    const q = query(collection(db, path), where('uid', '==', userProfile.uid), orderBy('date', 'desc'), limit(150));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setStudySessions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setStudySessions(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, path);
     });
@@ -288,16 +446,11 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
   }, [userProfile.uid]);
 
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
+    const todayStr = new Date().toISOString().split('T')[0];
     const path = 'activityLog';
-    const q = query(
-      collection(db, path),
-      where('uid', '==', userProfile.uid),
-      where('date', '==', today),
-      orderBy('timestamp', 'desc')
-    );
+    const q = query(collection(db, path), where('uid', '==', userProfile.uid), where('date', '==', todayStr), orderBy('timestamp', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setTodayActivities(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setTodayActivities(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, path);
     });
@@ -311,168 +464,96 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
     setIsGeneratingReport(false);
   };
 
-  // Data Processing
-  const getSubjectColor = (val: number) => {
-    if (val >= 70) return '#10b981'; // Emerald-500
-    if (val >= 40) return '#f59e0b'; // Amber-500
-    return '#ef4444'; // Red-500
-  };
+  const getProgressColor = (progress: number) => progress >= 70 ? '#10b981' : progress >= 40 ? '#f59e0b' : '#ef4444';
 
-  const subjectData = subjects.map(s => {
-    const p = progress.find(item => item.subjectId === s)?.progress || 0;
-    const grade = userProfile.currentGrades?.[s] || 0;
-    return { name: s, progress: p, grade, color: getSubjectColor(p) };
+  const subjectData = subjects.map(subject => {
+    const progress = subjectProgress.find(p => p.subjectId === subject)?.progress || 0;
+    const grade = userProfile.currentGrades?.[subject] || 0;
+    return { name: subject, progress, grade, color: getProgressColor(progress) };
   });
 
-  const getRealAverage = () => {
+  const realAverage = (() => {
     const grades = userProfile.currentGrades || {};
-    const streamCoeffs = COEFFICIENTS[stream] || {};
-    
+    const coeffs = COEFFICIENTS[stream] || {};
     let totalWeightedGrade = 0;
     let totalCoeffs = 0;
-    let gradeCount = 0;
-
-    subjects.forEach(s => {
-      if (grades[s] !== undefined && grades[s] !== null) {
-        const coeff = streamCoeffs[s] || 1;
-        totalWeightedGrade += grades[s] * coeff;
+    subjects.forEach(subject => {
+      if (grades[subject] !== undefined && grades[subject] !== null) {
+        const coeff = coeffs[subject] || 1;
+        totalWeightedGrade += grades[subject] * coeff;
         totalCoeffs += coeff;
-        gradeCount++;
       }
     });
+    return totalCoeffs === 0 ? userProfile.currentAverage || 0 : totalWeightedGrade / totalCoeffs;
+  })();
 
-    if (totalCoeffs === 0) return userProfile.currentAverage || 0;
-    return totalWeightedGrade / totalCoeffs;
-  };
-
-  const realAverage = getRealAverage();
-
-  const getRangeDays = () => {
-    switch(timeRange) {
+  const dateRange = [...Array((() => {
+    switch (timeRange) {
       case 'day': return 1;
       case 'week': return 7;
       case 'month': return 30;
       default: return 7;
     }
-  };
-
-  const currentRangeDays = [...Array(getRangeDays())].map((_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    return d.toISOString().split('T')[0];
+  })())].map((_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() - index);
+    return date.toISOString().split('T')[0];
   }).reverse();
 
-  const disciplineData = currentRangeDays.map(date => {
-    const dayTasks = tasks.filter(t => t.dueDate.split('T')[0] === date);
-    const completed = dayTasks.filter(t => t.completed).length;
-    const percentage = dayTasks.length > 0 ? Math.round((completed / dayTasks.length) * 100) : 0;
-    return { 
-      date: date.split('-').slice(1).join('/'), 
-      percentage,
-      fullDate: date
-    };
+  const disciplineData = dateRange.map(dateStr => {
+    const dayTasks = tasks.filter(task => task.dueDate.split('T')[0] === dateStr);
+    const completed = dayTasks.filter(task => task.completed).length;
+    const percentage = dayTasks.length > 0 ? Math.round(completed / dayTasks.length * 100) : 0;
+    return { date: dateStr.split('-').slice(1).join('/'), percentage, fullDate: dateStr };
   });
 
-  const studyTimeData = currentRangeDays.map(date => {
-    const daySessions = studySessions.filter(s => s.date === date);
-    const totalSeconds = daySessions.reduce((acc, curr) => acc + curr.duration, 0);
-    return { 
-      date: date.split('-').slice(1).join('/'), 
-      hours: Number((totalSeconds / 3600).toFixed(1)),
-      minutes: Math.round(totalSeconds / 60),
-      fullDate: date
-    };
+  const studyTimeData = dateRange.map(dateStr => {
+    const totalDuration = studySessions.filter(s => s.date === dateStr).reduce((sum, s) => sum + s.duration, 0);
+    return { date: dateStr.split('-').slice(1).join('/'), hours: Number((totalDuration / 3600).toFixed(1)), minutes: Math.round(totalDuration / 60), fullDate: dateStr };
   });
 
-  const goalData = currentRangeDays.map((date, i) => ({
-    date: date.split('-').slice(1).join('/'),
+  const goalData = dateRange.map((dateStr, index) => ({
+    date: dateStr.split('-').slice(1).join('/'),
     goal: userProfile.targetGrade || 15,
-    current: (userProfile.currentAverage || 10) + (i * 0.05), // Adjusted simulated progress
-    fullDate: date
+    current: (userProfile.currentAverage || 10) + index * 0.05,
+    fullDate: dateStr
   }));
 
-  const subjectDistribution = subjects.map(s => {
-    const daySessions = studySessions.filter(sess => sess.subjectId === s || sess.title?.includes(s));
-    const totalSeconds = daySessions.reduce((acc, curr) => acc + curr.duration, 0);
-    return { name: s, value: totalSeconds };
+  const subjectDistribution = subjects.map(subject => {
+    const totalDuration = studySessions.filter(s => s.subjectId === subject || s.title?.includes(subject)).reduce((sum, s) => sum + s.duration, 0);
+    return { name: subject, value: totalDuration };
   }).filter(s => s.value > 0);
 
-  const radarData = subjects.map(s => {
-    const p = progress.find(item => item.subjectId === s)?.progress || 0;
-    const isWeak = userProfile.aiAnalysis?.weaknesses?.includes(s) || p < 40;
-    const isStrong = userProfile.aiAnalysis?.strengths?.includes(s) || p > 70;
-    
-    // Calculate a "mastery" score between 0 and 100
-    let mastery = p;
-    if (isStrong) mastery = Math.max(mastery, 80);
-    if (isWeak) mastery = Math.min(mastery, 40);
-    
-    return { subject: s, A: mastery, fullMark: 100 };
+  const radarData = subjects.map(subject => {
+    const progress = subjectProgress.find(p => p.subjectId === subject)?.progress || 0;
+    const isWeak = userProfile.aiAnalysis?.weaknesses?.includes(subject) || progress < 40;
+    const isStrong = userProfile.aiAnalysis?.strengths?.includes(subject) || progress > 70;
+    let value = progress;
+    if (isStrong) value = Math.max(value, 80);
+    if (isWeak) value = Math.min(value, 40);
+    return { subject, A: value, fullMark: 100 };
   });
 
-  const neglectedSubjects = subjects
-    .map(s => {
-      const lastTask = tasks.find(t => t.subject === s);
-      const days = lastTask 
-        ? Math.floor((Date.now() - new Date(lastTask.dueDate).getTime()) / (1000 * 60 * 60 * 24))
-        : 30; // Default to 30 if no task found
-      return { name: s, days };
-    })
-    .filter(s => s.days > 3)
-    .sort((a, b) => b.days - a.days);
+  const neglectedSubjects = subjects.map(subject => {
+    const task = tasks.find(t => t.subject === subject);
+    const days = task ? Math.floor((Date.now() - new Date(task.dueDate).getTime()) / (1000 * 60 * 60 * 24)) : 30;
+    return { name: subject, days };
+  }).filter(s => s.days > 3).sort((a, b) => b.days - a.days);
 
   const resetAllProgress = async () => {
-    const batch = progress.map(p => updateDoc(doc(db, 'subjectProgress', p.id), { progress: 0 }));
-    await Promise.all(batch);
+    const updates = subjectProgress.map(p => updateDoc(doc(db, 'subjectProgress', p.id), { progress: 0 }));
+    await Promise.all(updates);
   };
 
-  const t = {
-    fr: {
-      title: "Analytics & Performance",
-      progression: "Progression par matière",
-      discipline: "Discipline Journalière",
-      studyTime: "Temps d'étude",
-      studyTimeWeekly: "Evolution Hebdomadaire du temps d'étude",
-      goalVsReality: "Objectif vs Réalité",
-      streak: "Ta Continuité (Streak)",
-      neglected: "Matières Négligées",
-      prioritize: "Tu dois prioriser les matières en rouge",
-      irregular: "Tu as été irrégulier cette semaine",
-      increase: "Tu dois augmenter ton temps d'étude",
-      far: "Tu es encore loin de ton objectif",
-      dontBreak: "Ne casse pas ta streak !",
-      neglecting: "Tu négliges certaines matières",
-      day: "Jour",
-      week: "Semaine",
-      month: "Mois"
-    },
-    ar: {
-      title: "التحليلات والأداء",
-      progression: "التقدم حسب المادة",
-      discipline: "الانضباط اليومي",
-      studyTime: "وقت الدراسة",
-      studyTimeWeekly: "تطور وقت الدراسة الأسبوعي",
-      goalVsReality: "الهدف مقابل الواقع",
-      streak: "استمراريتك (Streak)",
-      neglected: "المواد المهملة",
-      prioritize: "يجب عليك إعطاء الأولوية للمواد باللون الأحمر",
-      irregular: "لقد كنت غير منتظم هذا الأسبوع",
-      increase: "يجب عليك زيادة وقت دراستك",
-      far: "لا تزال بعيداً عن هدفك",
-      dontBreak: "لا تكسر السلسلة!",
-      neglecting: "أنت تهمل بعض المواد",
-      day: "يوم",
-      week: "أسبوع",
-      month: "شهر"
-    }
-  }[lang === 'ar' ? 'ar' : 'fr'];
+  const t = tDict[lang] || tDict.fr;
+  const locale = lang === 'ar' ? 'ar-EG' : lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'fr-FR';
 
   return (
     <div className="space-y-6 md:space-y-8 pb-12" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl md:text-3xl font-black text-slate-900">{t.title}</h2>
-          <p className="text-slate-500 mt-1 text-sm md:text-base">Analyse tes efforts pour mieux réussir.</p>
+          <p className="text-slate-500 mt-1 text-sm md:text-base">{t.subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 md:gap-4">
           <div className="flex bg-white p-1 rounded-xl md:rounded-2xl border border-slate-100 shadow-sm shrink-0">
@@ -507,7 +588,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
             className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-100 rounded-2xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all text-sm font-bold"
           >
             <RotateCcw className="w-4 h-4" />
-            {lang === 'ar' ? "إعادة ضبط الكل" : "Tout réinitialiser"}
+            {t.resetAll}
           </button>
         </div>
       </div>
@@ -526,14 +607,14 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
             <div>
               <h3 className="text-lg md:text-2xl font-black text-slate-900">{t.studyTime}</h3>
               <p className="text-slate-500 text-xs md:text-sm">
-                {timeRange === 'day' ? (lang === 'ar' ? 'وقت الدراسة اليوم' : "Temps d'étude aujourd'hui") :
+                {timeRange === 'day' ? t.todayStudyTime :
                  timeRange === 'week' ? t.studyTimeWeekly : 
-                 (lang === 'ar' ? 'تطور وقت الدراسة الشهري' : "Évolution mensuelle du temps d'étude")}
+                 t.monthlyEvolution}
               </p>
             </div>
           </div>
           <div className="bg-slate-50 px-4 md:px-6 py-2.5 md:py-4 rounded-2xl md:rounded-3xl border border-slate-100 text-center">
-            <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total {t[timeRange]}</p>
+            <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.totalLabel} {t[timeRange]}</p>
             <p className="text-xl md:text-2xl font-black text-slate-900">
               {studyTimeData.reduce((acc, curr) => acc + curr.hours, 0).toFixed(1)}h
             </p>
@@ -570,7 +651,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
                   boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)',
                   padding: '16px' 
                 }}
-                formatter={(value: any) => [`${value} ${lang === 'ar' ? 'ساعة' : 'h'}`, t.studyTime]}
+                formatter={(value: any) => [`${value} ${t.hourAbbr}`, t.studyTime]}
               />
               <Area 
                 type="monotone" 
@@ -639,7 +720,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
               <div className="bg-purple-50 p-2.5 md:p-3 rounded-xl md:rounded-2xl text-purple-600">
                 <Zap className="w-5 h-5 md:w-6 md:h-6" />
               </div>
-              <h3 className="text-lg md:text-xl font-black text-slate-900">{lang === 'ar' ? 'توازن المواد' : 'Équilibre des Matières'}</h3>
+              <h3 className="text-lg md:text-xl font-black text-slate-900">{t.balanceTitle}</h3>
             </div>
           </div>
           <div className="h-[250px] md:h-[300px] w-full">
@@ -648,7 +729,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
                 <PolarGrid stroke="#f1f5f9" />
                 <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10, fontWeight: 'bold' }} />
                 <Radar
-                  name="Maîtrise"
+                  name={t.mastery}
                   dataKey="A"
                   stroke="#8b5cf6"
                   fill="#8b5cf6"
@@ -661,7 +742,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
           <div className="mt-6 p-4 bg-purple-50 rounded-2xl border border-purple-100 flex items-center gap-3">
             <Sparkles className="w-5 h-5 text-purple-600" />
             <p className="text-sm font-bold text-purple-700">
-              {lang === 'ar' ? 'هنا ترى توزيع قوتك في جميع المواد.' : 'Visualise la maîtrise de chacune de tes matières.'}
+              {t.balanceDesc}
             </p>
           </div>
         </motion.div>
@@ -769,7 +850,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
 
           <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
             <p className="text-sm font-bold text-orange-400">{t.dontBreak}</p>
-            <p className="text-2xl font-black mt-1">{userProfile.currentStreak || 0} Jours</p>
+            <p className="text-2xl font-black mt-1">{userProfile.currentStreak || 0} {t.daysLabel}</p>
           </div>
         </motion.div>
 
@@ -784,7 +865,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
             <div className="bg-sky-50 p-3 rounded-2xl text-sky-600">
               <Clock className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-black text-slate-900">{lang === 'ar' ? 'توزيع الوقت' : 'Temps par Matière'}</h3>
+            <h3 className="text-xl font-black text-slate-900">{t.timeBySubject}</h3>
           </div>
 
           <div className="h-[200px] w-full">
@@ -829,7 +910,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
             <div className="bg-amber-50 p-3 rounded-2xl text-amber-600">
               <AlertTriangle className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-black text-slate-900">{lang === 'ar' ? 'مواد ضعيفة' : 'Matières Faibles'}</h3>
+            <h3 className="text-xl font-black text-slate-900">{t.weakSubjects}</h3>
           </div>
 
           <div className="space-y-3">
@@ -839,7 +920,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
                 <span className="font-bold text-slate-700 text-sm">{s}</span>
               </div>
             )) : (
-              <p className="text-slate-400 text-xs text-center py-4 italic">Aucune matière marquée comme faible.</p>
+              <p className="text-slate-400 text-xs text-center py-4 italic">{t.noWeakSubjects}</p>
             )}
           </div>
         </motion.div>
@@ -867,7 +948,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
                   <div className="w-2 h-10 bg-red-500 rounded-full" />
                   <div>
                     <p className="font-bold text-slate-800">{s.name}</p>
-                    <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">{s.days} jours sans révision</p>
+                    <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">{t.daysWithoutReview(s.days)}</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-slate-300 group-hover:translate-x-1 transition-transform" />
@@ -875,7 +956,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
             )) : (
               <div className="col-span-2 text-center py-12 bg-emerald-50 rounded-[32px] border border-emerald-100">
                 <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto mb-4" />
-                <p className="text-emerald-700 font-bold">Toutes les matières sont à jour !</p>
+                <p className="text-emerald-700 font-bold">{t.allUpToDate}</p>
               </div>
             )}
           </div>
@@ -897,10 +978,10 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
             </div>
             <div>
               <h3 className="text-xl font-black text-slate-900">
-                {lang === 'ar' ? "تقرير الذكاء الاصطناعي اليومي" : "Rapport IA Quotidien"}
+                {t.aiReportTitle}
               </h3>
               <p className="text-slate-500 text-sm">
-                {lang === 'ar' ? "تحليل ذكي ليومك الدراسي." : "Analyse intelligente de ta journée d'étude."}
+                {t.aiReportDesc}
               </p>
             </div>
           </div>
@@ -910,7 +991,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
             className="flex items-center justify-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-primary-700 transition-all disabled:opacity-50 shadow-lg shadow-primary-100"
           >
             {isGeneratingReport ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
-            {lang === 'ar' ? "توليد التقرير" : "Générer le rapport"}
+            {t.generateReport}
           </button>
         </div>
 
@@ -926,8 +1007,8 @@ export const Analytics: React.FC<AnalyticsProps> = ({ userProfile }) => {
           <div className="text-center py-12 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
             <p className="text-slate-400 font-medium">
               {todayActivities.length > 0 
-                ? (lang === 'ar' ? "اضغط على الزر أعلاه لتحليل أنشطتك اليومية." : "Clique sur le bouton ci-dessus pour analyser tes activités du jour.")
-                : (lang === 'ar' ? "لم يتم تسجيل أي نشاط اليوم بعد." : "Aucune activité enregistrée aujourd'hui pour le moment.")
+                ? t.clickGenerate
+                : t.noActivity
               }
             </p>
           </div>

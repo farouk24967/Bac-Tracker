@@ -22,7 +22,8 @@ import {
   Brain
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { translations } from '../translations';
+import { safeT } from '../translations';
+import { useBacSession } from '../hooks/useBacSession';
 
 interface OnboardingProps {
   user: any;
@@ -37,12 +38,16 @@ export const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
   const [universityGoal, setUniversityGoal] = useState('');
   const [source, setSource] = useState('');
   const [stream, setStream] = useState<Stream | ''>('');
+  const [bacSessionId, setBacSessionId] = useState<string>('');
   const [subjectTargets, setSubjectTargets] = useState<Record<string, number>>({});
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<{ strengths: string[]; weaknesses: string[]; recommendedPlan: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const t = translations[lang].onboarding;
+  const { active: activeSession, sessions } = useBacSession();
+  const recommendedSession = activeSession || (sessions.length > 0 ? sessions[sessions.length - 1] : null);
+
+  const t = safeT(lang);
   const subjects = stream ? SUBJECTS_BY_STREAM[stream] : [];
 
   const handleNext = () => {
@@ -91,6 +96,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
       email: user.email || '',
       photoURL: user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`,
       stream: stream as Stream,
+      bacSessionId: bacSessionId || (recommendedSession ? String(recommendedSession.year) : undefined),
       targetGrade: (Object.values(subjectTargets).length > 0 && subjects.length > 0) 
         ? Object.values(subjectTargets).reduce((a, b) => a + b, 0) / subjects.length 
         : 10,
@@ -128,7 +134,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
           onComplete(profile);
         }
       } else {
-        alert(lang === 'ar' ? `خطأ: ${error.message}` : `Une erreur est survenue : ${error.message}`);
+        alert(t.errorAlert(error.message));
       }
     } finally {
       setLoading(false);
@@ -273,27 +279,72 @@ export const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
 
       case 4:
         return (
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-            <h3 className="text-3xl font-black text-slate-900 mb-8 flex items-center gap-3 leading-tight">
-              <BookOpen className="w-8 h-8 text-primary-500" />
-              {t.stream_title}
-            </h3>
-            <div className="grid grid-cols-1 gap-4">
-              {STREAMS.map(s => (
-                <button
-                  key={s}
-                  onClick={() => setStream(s)}
-                  className={cn(
-                    "p-6 rounded-[28px] text-right border-2 transition-all font-black text-xl shadow-sm",
-                    stream === s 
-                      ? "border-slate-900 bg-slate-900 text-white shadow-xl scale-[1.02]" 
-                      : "border-slate-100 bg-white text-slate-700 hover:border-slate-200"
-                  )}
-                  dir="rtl"
-                >
-                  {s}
-                </button>
-              ))}
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-10">
+            <div>
+              <h3 className="text-3xl font-black text-slate-900 mb-8 flex items-center gap-3 leading-tight">
+                <BookOpen className="w-8 h-8 text-primary-500" />
+                {t.stream_title}
+              </h3>
+              <div className="grid grid-cols-1 gap-4">
+                {STREAMS.map(s => (
+                  <button
+                    key={s}
+                    onClick={() => setStream(s)}
+                    className={cn(
+                      "p-6 rounded-[28px] text-right border-2 transition-all font-black text-xl shadow-sm",
+                      stream === s 
+                        ? "border-slate-900 bg-slate-900 text-white shadow-xl scale-[1.02]" 
+                        : "border-slate-100 bg-white text-slate-700 hover:border-slate-200"
+                    )}
+                    dir="rtl"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-2xl font-black text-slate-900 mb-2 flex items-center gap-3 leading-tight">
+                <GraduationCap className="w-6 h-6 text-amber-500" />
+                {t.whichSession}
+              </h3>
+              {recommendedSession && (
+                <p className="text-slate-500 font-medium mb-6 text-sm">
+                  {t.recommendedSessionMsg(recommendedSession.year)}
+                </p>
+              )}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {sessions
+                  .slice()
+                  .sort((a, b) => b.year - a.year)
+                  .map(s => {
+                    const isRecommended = recommendedSession?.id === s.id;
+                    const selected = bacSessionId === String(s.year);
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => setBacSessionId(String(s.year))}
+                        className={cn(
+                          "p-4 rounded-3xl border-2 transition-all font-black text-center relative",
+                          selected
+                            ? "border-slate-900 bg-slate-900 text-white shadow-xl scale-[1.02]"
+                            : "border-slate-100 bg-white text-slate-700 hover:border-slate-200"
+                        )}
+                      >
+                        {isRecommended && (
+                          <span className={cn(
+                            "absolute -top-2.5 left-1/2 -translate-x-1/2 text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full",
+                            selected ? "bg-emerald-500 text-white" : "bg-emerald-100 text-emerald-600"
+                          )}>
+                            {t.recommended}
+                          </span>
+                        )}
+                        BAC {s.year}
+                      </button>
+                    );
+                  })}
+              </div>
             </div>
           </motion.div>
         );
@@ -505,7 +556,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
             disabled={
               (step === 2 && (!universityGoal || passions.length === 0 || hobbies.length === 0)) ||
               (step === 3 && !source) ||
-              (step === 4 && !stream) ||
+              (step === 4 && (!stream || !bacSessionId)) ||
               (step === 6 && Object.keys(subjectTargets).length < subjects.length)
             }
             className="w-full py-5 bg-slate-900 text-white rounded-[24px] font-bold shadow-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3 group disabled:opacity-50 disabled:grayscale"

@@ -1,0 +1,28 @@
+# Dépendances / artefacts de build (reconstruits sur Vercel)
+node_modules
+dist
+dist_electron
+dist_electron_v2
+dist_desktop
+out
+build
+
+# Cibles natives lourdes — non nécessaires pour le déploiement web
+android
+
+# Médias / assets lourds
+photos
+assets
+icons
+
+# Fichiers locaux
+.env*
+!.env.example
+*.log
+*.apk
+*.exe
+*.dmg
+
+# Git / Vercel internes
+.git
+.vercel

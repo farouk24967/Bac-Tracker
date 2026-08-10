@@ -21,7 +21,7 @@ import {
   isSameMonth
 } from 'date-fns';
 
-import { fr, arDZ } from 'date-fns/locale';
+import { fr, arDZ, enUS, es } from 'date-fns/locale';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { UserProfile } from '../types';
@@ -70,7 +70,8 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ sessions, lang
     return map;
   }, [sessions]);
 
-  const t = {
+  const dateLocale = lang === 'ar' ? arDZ : lang === 'en' ? enUS : lang === 'es' ? es : fr;
+  const tDict = {
     fr: {
       title: "Tableau de Constance 3D",
       subtitle: "Chaque croix représente une journée d'étude intense.",
@@ -87,19 +88,35 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ sessions, lang
       more: "أكثر",
       less: "أقل",
       totalDays: "أيام النشاط",
-      streak: "السلسلة الحالية",
-      all: "الكل",
-      month: "شهر",
-      week: "أسبوع",
-      prev: "السابق",
-      next: "التالي"
+      streak: "السلسلة الحالية"
+    },
+    en: {
+      title: "3D Consistency Chart",
+      subtitle: "Each cross represents an intense study day.",
+      legend: "Intensity",
+      more: "More",
+      less: "Less",
+      totalDays: "Active days",
+      streak: "Current streak"
+    },
+    es: {
+      title: "Tabla de Constancia 3D",
+      subtitle: "Cada cruz representa un día de estudio intenso.",
+      legend: "Intensidad",
+      more: "Más",
+      less: "Menos",
+      totalDays: "Días activos",
+      streak: "Racha actual"
     }
-  }[lang === 'ar' ? 'ar' : 'fr'];
-  
+  };
+  const t = tDict[lang] || tDict.fr;
+
   const viewLabels = {
     fr: { all: "Tout", month: "Mois", week: "Semaine", prev: "Précédent", next: "Suivant" },
-    ar: { all: "الكل", month: "شهر", week: "أسبوع", prev: "السابق", next: "التالي" }
-  }[lang === 'ar' ? 'ar' : 'fr'];
+    ar: { all: "الكل", month: "شهر", week: "أسبوع", prev: "السابق", next: "التالي" },
+    en: { all: "All", month: "Month", week: "Week", prev: "Previous", next: "Next" },
+    es: { all: "Todo", month: "Mes", week: "Semana", prev: "Anterior", next: "Siguiente" }
+  }[lang] || { all: "Tout", month: "Mois", week: "Semaine", prev: "Précédent", next: "Suivant" };
 
 
   const getIntensity = (duration: number) => {
@@ -206,8 +223,8 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ sessions, lang
           <div>
             <h3 className="text-2xl font-black text-slate-900 tracking-tight">
               {viewMode === 'all' ? t.title : 
-               viewMode === 'month' ? format(currentDate, 'MMMM yyyy', { locale: lang === 'ar' ? arDZ : fr }) :
-               days.length > 0 ? `${format(days[0], 'd MMM', { locale: lang === 'ar' ? arDZ : fr })} - ${format(days[days.length-1], 'd MMM yyyy', { locale: lang === 'ar' ? arDZ : fr })}` : t.title}
+               viewMode === 'month' ? format(currentDate, 'MMMM yyyy', { locale: dateLocale }) :
+               days.length > 0 ? `${format(days[0], 'd MMM', { locale: dateLocale })} - ${format(days[days.length-1], 'd MMM yyyy', { locale: dateLocale })}` : t.title}
             </h3>
 
 
@@ -311,7 +328,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ sessions, lang
                           "transform-gpu preserve-3d"
                         )}
                         onClick={() => handleSquareClick(day)}
-                        title={`${format(day, 'PPP', { locale: lang === 'ar' ? arDZ : fr })}: ${Math.round(duration / 60)} min`}
+                        title={`${format(day, 'PPP', { locale: dateLocale })}: ${Math.round(duration / 60)} min`}
                       >
 
                         {/* 3D Sides (Pseudo-elements for depth) */}
@@ -326,7 +343,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({ sessions, lang
 
                         {/* Tooltip */}
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded-lg opacity-0 group-hover/cell:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
-                          {format(day, 'EEEE d MMMM', { locale: lang === 'ar' ? arDZ : fr })} • {Math.round(duration / 60)}m
+                          {format(day, 'EEEE d MMMM', { locale: dateLocale })} • {Math.round(duration / 60)}m
                         </div>
 
                       </motion.div>

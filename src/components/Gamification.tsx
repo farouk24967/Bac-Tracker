@@ -2,7 +2,7 @@ import React from 'react';
 import { Trophy, Star, Award, Zap, Target, Shield, Flame, Medal, Moon, Sunrise } from 'lucide-react';
 import { motion } from 'motion/react';
 import { UserProfile, Language } from '../types';
-import { translations } from '../translations';
+import { safeT } from '../translations';
 
 interface GamificationProps {
   userProfile: UserProfile;
@@ -23,7 +23,7 @@ const BADGES = [
 
 export const Gamification: React.FC<GamificationProps> = ({ userProfile }) => {
   const lang: Language = userProfile.language || 'fr';
-  const t = translations[lang];
+  const t = safeT(lang);
 
   return (
     <div className="space-y-8 pb-12">

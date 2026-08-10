@@ -30,7 +30,7 @@ import {
 import { jsPDF } from 'jspdf';
 import { motion, AnimatePresence } from 'motion/react';
 import { UserProfile, SubjectProgress, Language, Stream, AITool } from '../types';
-import { translations } from '../translations';
+import { safeT } from '../translations';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
@@ -55,7 +55,106 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
   const [copiedIndex, setCopiedIndex] = useState<string | null>(null);
   const [progress, setProgress] = useState<SubjectProgress[]>([]);
   const lang: Language = userProfile.language || 'fr';
-  const t = translations[lang];
+  const tDict = {
+    fr: {
+      analyze_again: "Relancer l'analyse",
+      add_notes_for_analysis: "Ajoute tes notes dans le tableau de bord pour permettre l'analyse.",
+      smart_study_plan: "Plan d'étude Intelligent",
+      custom_schedule_desc: "Obtiens un emploi du temps personnalisé basé sur tes performances.",
+      update_plan: 'Actualiser le plan',
+      generate_plan: 'Générer mon plan',
+      day_label: 'JOUR',
+      no_sessions_today: 'Aucune session prévue pour ce jour.',
+      generate_plan_desc: "Génère intelligemment ton emploi du temps pour la semaine prochaine afin d'optimiser tes révisions.",
+      upload_files: 'Charger des fichiers',
+      upload_files_desc: "Charge tes cours ou résumés pour les utiliser avec l'IA.",
+      click_to_upload: 'Clique pour uploader',
+      all_formats: 'Tous formats (PDF, DOCX, JPG...)',
+      selected: 'Sélectionné',
+      no_files: 'Aucun fichier',
+      file_reference: (name: string) => `Le contenu de "${name}" sera utilisé comme référence lors de la génération.`,
+      flashcards_one_click: 'Crée des cartes de révision en un clic.',
+      topic_placeholder_flashcards: 'Sujet (ex: La mitose, Guerre de libération...)',
+      generating: 'Génération...',
+      structured_summaries: 'Des résumés structurés pour le Bac algérien.',
+      topic_placeholder_summary: 'Sujet (ex: Limites et continuité, Les acides...)',
+      video_not_supported: 'Votre navigateur ne supporte pas la lecture de vidéos.'
+    },
+    en: {
+      analyze_again: "Re-run the analysis",
+      add_notes_for_analysis: 'Add your grades in the dashboard to enable the analysis.',
+      smart_study_plan: 'Smart Study Plan',
+      custom_schedule_desc: 'Get a personalized schedule based on your performance and goals.',
+      update_plan: 'Update the plan',
+      generate_plan: 'Generate my plan',
+      day_label: 'DAY',
+      no_sessions_today: 'No sessions scheduled for this day.',
+      generate_plan_desc: 'Smartly generate your schedule for next week to optimize your revision.',
+      upload_files: 'Upload files',
+      upload_files_desc: 'Upload your lessons or summaries to use them with the AI.',
+      click_to_upload: 'Click to upload',
+      all_formats: 'All formats (PDF, DOCX, JPG...)',
+      selected: 'Selected',
+      no_files: 'No files',
+      file_reference: (name: string) => `The content of "${name}" will be used as a reference during generation.`,
+      flashcards_one_click: 'Create revision flashcards in one click.',
+      topic_placeholder_flashcards: 'Topic (e.g.: Mitosis, Liberation War...)',
+      generating: 'Generating...',
+      structured_summaries: 'Structured summaries for the Algerian Bac.',
+      topic_placeholder_summary: 'Topic (e.g.: Limits and continuity, Acids...)',
+      video_not_supported: 'Your browser does not support video playback.'
+    },
+    es: {
+      analyze_again: 'Relanzar el análisis',
+      add_notes_for_analysis: 'Añade tus notas en el panel para permitir el análisis.',
+      smart_study_plan: 'Plan de estudio inteligente',
+      custom_schedule_desc: 'Obtén un horario personalizado según tu rendimiento y tus objetivos.',
+      update_plan: 'Actualizar el plan',
+      generate_plan: 'Generar mi plan',
+      day_label: 'DÍA',
+      no_sessions_today: 'No hay sesiones previstas para este día.',
+      generate_plan_desc: 'Genera inteligentemente tu horario para la próxima semana para optimizar tus revisiones.',
+      upload_files: 'Subir archivos',
+      upload_files_desc: 'Sube tus lecciones o resúmenes para usarlos con la IA.',
+      click_to_upload: 'Haz clic para subir',
+      all_formats: 'Todos los formatos (PDF, DOCX, JPG...)',
+      selected: 'Seleccionado',
+      no_files: 'Sin archivos',
+      file_reference: (name: string) => `El contenido de "${name}" se utilizará como referencia durante la generación.`,
+      flashcards_one_click: 'Crea tarjetas de revisión en un clic.',
+      topic_placeholder_flashcards: 'Tema (ej: Mitosis, Guerra de liberación...)',
+      generating: 'Generando...',
+      structured_summaries: 'Resúmenes estructurados para el Bac argelino.',
+      topic_placeholder_summary: 'Tema (ej: Límites y continuidad, Los ácidos...)',
+      video_not_supported: 'Tu navegador no admite la reproducción de vídeo.'
+    },
+    ar: {
+      analyze_again: 'إعادة التحليل',
+      add_notes_for_analysis: 'أضف علاماتك في لوحة التحكم للسماح بالتحليل.',
+      smart_study_plan: 'مخطط الدراسة الذكي',
+      custom_schedule_desc: 'احصل على جدول مخصص بناءً على أدائك وأهدافك.',
+      update_plan: 'تحديث المخطط',
+      generate_plan: 'إنشاء المخطط',
+      day_label: 'يوم',
+      no_sessions_today: 'لا توجد جلسات مقررة لهذا اليوم.',
+      generate_plan_desc: 'أنشئ جدولًا مخصصًا للأسبوع القادم بذكاء لتحسين مراجعتك.',
+      upload_files: 'رفع الملفات',
+      upload_files_desc: 'ارفع دروسك أو ملخصاتك لاستخدامها مع الذكاء الاصطناعي.',
+      click_to_upload: 'اضغط للرفع',
+      all_formats: 'أي صيغة (PDF, DOCX, JPG...)',
+      selected: 'مختار',
+      no_files: 'لا توجد ملفات',
+      file_reference: (name: string) => `سيتم استخدام محتوى "${name}" كمرجع عند إنشاء الملخصات أو البطاقات.`,
+      flashcards_one_click: 'أنشئ بطاقات مراجعة بنقرة واحدة.',
+      topic_placeholder_flashcards: 'الموضوع (مثال: الانقسام الخيطي، ثورة التحرير...)',
+      generating: 'جاري التوليد...',
+      structured_summaries: 'ملخصات منظمة للبكالوريا الجزائرية.',
+      topic_placeholder_summary: 'الموضوع (مثال: النهايات والاتصال، الأحماض...)',
+      video_not_supported: 'متصفحك لا يدعم تشغيل الفيديو.'
+    }
+  };
+  const t = { ...safeT(lang), ...(tDict[lang] || tDict.fr) };
+  const locale = lang === 'ar' ? 'ar-EG' : lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'fr-FR';
   
   // Analysis State
   const [analysis, setAnalysis] = useState<string | null>(null);
@@ -243,7 +342,7 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
             className="flex items-center justify-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-primary-700 transition-all disabled:opacity-50 shadow-lg shadow-primary-100 w-full sm:w-auto"
           >
             {isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
-            {analysis ? (lang === 'ar' ? 'إعادة التحليل' : 'Relancer l\'analyse') : t.analyze_notes}
+            {analysis ? t.analyze_again : t.analyze_notes}
           </button>
         </div>
 
@@ -263,7 +362,7 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
           {!analysis && !isAnalyzing && progress.length === 0 && (
             <div className="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
               <p className="text-slate-400">
-                {lang === 'ar' ? "أضف علاماتك في لوحة التحكم للسماح بالتحليل." : "Ajoute tes notes dans le tableau de bord pour permettre l'analyse."}
+                {t.add_notes_for_analysis}
               </p>
             </div>
           )}
@@ -278,9 +377,9 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
               <Calendar className="w-6 h-6 text-primary-600" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-slate-900">{lang === 'ar' ? 'مخطط الدراسة الذكي' : 'Plan d\'étude Intelligent'}</h3>
+              <h3 className="text-xl font-bold text-slate-900">{t.smart_study_plan}</h3>
               <p className="text-slate-500 text-sm">
-                {lang === 'ar' ? 'احصل على جدول مخصص بناءً على أدائك وأهدافك.' : 'Obtiens un emploi du temps personnalisé basé sur tes performances.'}
+                {t.custom_schedule_desc}
               </p>
             </div>
           </div>
@@ -290,7 +389,7 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
             className="flex items-center justify-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-primary-700 transition-all disabled:opacity-50 shadow-lg shadow-primary-100 w-full sm:w-auto"
           >
             {isGeneratingPlan ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
-            {studyPlan.length > 0 ? (lang === 'ar' ? 'تحديث المخطط' : 'Actualiser le plan') : (lang === 'ar' ? 'إنشاء المخطط' : 'Générer mon plan')}
+            {studyPlan.length > 0 ? t.update_plan : t.generate_plan}
           </button>
         </div>
 
@@ -311,10 +410,10 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
                 </button>
                 <div className="text-center">
                   <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">
-                    {lang === 'ar' ? 'يوم' : 'JOUR'} {selectedDayOffset + 1}
+                    {t.day_label} {selectedDayOffset + 1}
                   </p>
                   <p className="font-bold text-slate-900">
-                    {new Date(new Date().getTime() + (selectedDayOffset * 24 * 60 * 60 * 1000)).toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    {new Date(new Date().getTime() + (selectedDayOffset * 24 * 60 * 60 * 1000)).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })}
                   </p>
                 </div>
                 <button 
@@ -370,7 +469,7 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
                     <div className="text-center py-10 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
                        <BookOpen className="w-8 h-8 text-slate-200 mx-auto mb-2" />
                        <p className="text-slate-400 text-sm font-medium italic">
-                         {lang === 'ar' ? 'لا توجد جلسات مقررة لهذا اليوم.' : 'Aucune session prévue pour ce jour.'}
+                         {t.no_sessions_today}
                        </p>
                     </div>
                   )}
@@ -382,9 +481,7 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
                 <Calendar className="w-8 h-8 text-slate-200" />
               </div>
               <p className="text-slate-400 max-w-sm mx-auto">
-                {lang === 'ar' 
-                  ? 'أنشئ جدولًا مخصصًا للأسبوع القادم بذكاء لتحسين مراجعتك.' 
-                  : 'Génère intelligemment ton emploi du temps pour la semaine prochaine afin d\'optimiser tes révisions.'}
+                {t.generate_plan_desc}
               </p>
             </div>
           )}
@@ -398,9 +495,9 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
             <Upload className="w-6 h-6 text-primary-600" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-slate-900">{lang === 'ar' ? "رفع الملفات" : "Charger des fichiers"}</h3>
+            <h3 className="text-xl font-bold text-slate-900">{t.upload_files}</h3>
             <p className="text-slate-500 text-sm">
-              {lang === 'ar' ? "ارفع دروسك أو ملخصاتك لاستخدامها مع الذكاء الاصطناعي." : "Charge tes cours ou résumés pour les utiliser avec l'IA."}
+              {t.upload_files_desc}
             </p>
           </div>
         </div>
@@ -410,8 +507,8 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
             <div className="bg-white p-4 rounded-2xl shadow-sm group-hover:scale-110 transition-transform mb-4">
               <Upload className="w-8 h-8 text-primary-600" />
             </div>
-            <p className="font-bold text-slate-900 mb-1">{lang === 'ar' ? "اضغط للرفع" : "Clique pour uploader"}</p>
-            <p className="text-xs text-slate-400">{lang === 'ar' ? "أي صيغة (PDF, DOCX, JPG...)" : "Tous formats (PDF, DOCX, JPG...)"}</p>
+            <p className="font-bold text-slate-900 mb-1">{t.click_to_upload}</p>
+            <p className="text-xs text-slate-400">{t.all_formats}</p>
             <input type="file" multiple className="hidden" onChange={handleFileUpload} />
           </label>
 
@@ -445,7 +542,7 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
                 <div className="flex items-center gap-2">
                   {selectedFileIndex === idx && (
                     <span className="text-[10px] font-black text-primary-600 uppercase tracking-widest bg-primary-100 px-2 py-1 rounded-md">
-                      {lang === 'ar' ? 'مختار' : 'Sélectionné'}
+                      {t.selected}
                     </span>
                   )}
                   <button 
@@ -462,7 +559,7 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
             )) : (
               <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-slate-50 rounded-[32px] border border-dashed border-slate-200">
                 <File className="w-8 h-8 text-slate-200 mb-2" />
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{lang === 'ar' ? "لا توجد ملفات" : "Aucun fichier"}</p>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{t.no_files}</p>
               </div>
             )}
           </div>
@@ -471,9 +568,7 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
           <div className="mt-4 p-4 bg-primary-50 rounded-2xl border border-primary-100 flex items-center gap-3">
             <Sparkles className="w-5 h-5 text-primary-600" />
             <p className="text-sm text-primary-900 font-medium">
-              {lang === 'ar' 
-                ? `سيتم استخدام محتوى "${uploadedFiles[selectedFileIndex].name}" كمرجع عند إنشاء الملخصات أو البطاقات.` 
-                : `Le contenu de "${uploadedFiles[selectedFileIndex].name}" sera utilisé comme référence lors de la génération.`}
+              {t.fileReference(uploadedFiles[selectedFileIndex].name)}
             </p>
           </div>
         )}
@@ -489,7 +584,7 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
             <div>
               <h3 className="text-xl font-bold text-slate-900">{t.flashcards}</h3>
               <p className="text-slate-500 text-sm">
-                {lang === 'ar' ? "أنشئ بطاقات مراجعة بنقرة واحدة." : "Crée des cartes de révision en un clic."}
+                {t.flashcards_one_click}
               </p>
             </div>
           </div>
@@ -515,7 +610,7 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
                 type="text"
                 value={flashcardTopic}
                 onChange={(e) => setFlashcardTopic(e.target.value)}
-                placeholder={lang === 'ar' ? "الموضوع (مثال: الانقسام الخيطي، ثورة التحرير...)" : "Sujet (ex: La mitose, Guerre de libération...)"}
+                placeholder={t.topic_placeholder_flashcards}
                 className="flex-1 bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-amber-500 outline-none"
               />
               <button
@@ -524,7 +619,7 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
                 className="bg-amber-600 text-white px-6 py-4 rounded-2xl font-bold hover:bg-amber-700 transition-all disabled:opacity-50 shadow-lg shadow-amber-100 w-full sm:w-auto flex items-center justify-center gap-2"
               >
                 {isGeneratingFlashcards ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
-                {isGeneratingFlashcards ? (lang === 'ar' ? 'جاري التوليد...' : 'Génération...') : t.generate}
+                {isGeneratingFlashcards ? t.generating : t.generate}
               </button>
             </div>
           </div>
@@ -588,7 +683,7 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
             <div>
               <h3 className="text-xl font-bold text-slate-900">{t.summary}</h3>
               <p className="text-slate-500 text-sm">
-                {lang === 'ar' ? "ملخصات منظمة للبكالوريا الجزائرية." : "Des résumés structurés pour le Bac algérien."}
+                {t.structured_summaries}
               </p>
             </div>
           </div>
@@ -614,7 +709,7 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
                 type="text"
                 value={summaryTopic}
                 onChange={(e) => setSummaryTopic(e.target.value)}
-                placeholder={lang === 'ar' ? "الموضوع (مثال: النهايات والاتصال، الأحماض...)" : "Sujet (ex: Limites et continuité, Les acides...)"}
+                placeholder={t.topic_placeholder_summary}
                 className="flex-1 bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
               <button
@@ -623,7 +718,7 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
                 className="bg-purple-600 text-white px-6 py-4 rounded-2xl font-bold hover:bg-purple-700 transition-all disabled:opacity-50 shadow-lg shadow-purple-100 w-full sm:w-auto flex items-center justify-center gap-2"
               >
                 {isGeneratingSummary ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileText className="w-5 h-5" />}
-                {isGeneratingSummary ? (lang === 'ar' ? 'جاري التوليد...' : 'Génération...') : t.generate}
+                {isGeneratingSummary ? t.generating : t.generate}
               </button>
             </div>
           </div>
@@ -711,7 +806,7 @@ export const AITools: React.FC<AIToolsProps> = ({ userProfile }) => {
                         controls
                         src={tool.videoUrl}
                       >
-                        {lang === 'ar' ? 'متصفحك لا يدعم تشغيل الفيديو.' : 'Votre navigateur ne supporte pas la lecture de vidéos.'}
+                        {t.video_not_supported}
                       </video>
                     )}
                   </div>

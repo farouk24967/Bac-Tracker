@@ -7,6 +7,7 @@ export interface UserProfile {
   email: string;
   photoURL: string;
   stream?: Stream;
+  bacSessionId?: string;
   currentAverage?: number;
   targetGrade?: number;
   points: number;

@@ -16,6 +16,14 @@ export const DailyMotivation: React.FC<DailyMotivationProps> = ({ userProfile, i
   const lang: Language = userProfile.language || 'fr';
   const settings = userProfile.motivationSettings || { enabled: true, type: 'both' };
 
+  const tDict = {
+    fr: { inspirationTitle: "Inspiration du jour", inspirationSub: "Des mots pour booster ta détermination", goodMorning: "Bonjour !", dailyDose: "Voici ta dose quotidienne de motivation", startStudying: "Commencer à étudier" },
+    en: { inspirationTitle: "Today's Inspiration", inspirationSub: "Words to boost your determination", goodMorning: "Good morning!", dailyDose: "Here is your daily dose of motivation", startStudying: "Start studying" },
+    es: { inspirationTitle: "Inspiración del día", inspirationSub: "Palabras para reforzar tu determinación", goodMorning: "¡Buenos días!", dailyDose: "Aquí tienes tu dosis diaria de motivación", startStudying: "Empezar a estudiar" },
+    ar: { inspirationTitle: "إلهام اليوم", inspirationSub: "كلمات لتعزيز عزيمتك", goodMorning: "صباح الخير!", dailyDose: "إليك جرعتك اليومية من التحفيز", startStudying: "ابدأ الدراسة" }
+  };
+  const t = tDict[lang] || tDict.fr;
+
   useEffect(() => {
     // Select item based on current date to ensure it changes daily but is consistent for all users on the same day
     const today = new Date();
@@ -181,10 +189,10 @@ export const DailyMotivation: React.FC<DailyMotivationProps> = ({ userProfile, i
             </div>
             <div>
               <h3 className="text-2xl font-black text-slate-900">
-                {lang === 'ar' ? "إلهام اليوم" : "Inspiration du jour"}
+                {t.inspirationTitle}
               </h3>
               <p className="text-slate-500 text-sm">
-                {lang === 'ar' ? "كلمات لتعزيز عزيمتك" : "Des mots pour booster ta détermination"}
+                {t.inspirationSub}
               </p>
             </div>
           </div>
@@ -218,10 +226,10 @@ export const DailyMotivation: React.FC<DailyMotivationProps> = ({ userProfile, i
                 <Star className="w-10 h-10 animate-pulse" />
               </div>
               <h2 className="text-4xl font-black text-slate-900 mb-2">
-                {lang === 'ar' ? "صباح الخير!" : "Bonjour !"}
+                {t.goodMorning}
               </h2>
               <p className="text-slate-500 font-bold">
-                {lang === 'ar' ? "إليك جرعتك اليومية من التحفيز" : "Voici ta dose quotidienne de motivation"}
+                {t.dailyDose}
               </p>
             </div>
 
@@ -232,7 +240,7 @@ export const DailyMotivation: React.FC<DailyMotivationProps> = ({ userProfile, i
                 onClick={handleClose}
                 className="w-full py-5 bg-slate-900 text-white rounded-[24px] font-black text-lg shadow-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3 group"
               >
-                {lang === 'ar' ? "ابدأ الدراسة" : "Commencer à étudier"}
+                {t.startStudying}
                 <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>

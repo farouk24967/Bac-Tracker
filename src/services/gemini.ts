@@ -1,12 +1,4 @@
-/// <reference types="vite/client" />
-import { createClient } from '@base44/sdk';
-
-const base44 = createClient({
-  appId: import.meta.env.VITE_BASE44_APP_ID || "69f8f56ca433d203293833a1",
-  headers: {
-    "api_key": import.meta.env.VITE_BASE44_API_KEY || "834f7448afe2478ca477d9961fbf71fc"
-  }
-});
+import { invokeAI } from './aiProxy';
 
 const MODEL_NAME = 'gemini_3_flash';
 
@@ -20,7 +12,7 @@ export async function getRecommendations(grades: any[], subjects: any[]) {
   `;
 
   try {
-    const response = await base44.integrations.Core.InvokeLLM({
+    const response = await invokeAI({
       model: MODEL_NAME,
       prompt: prompt
     });
@@ -33,7 +25,7 @@ export async function getRecommendations(grades: any[], subjects: any[]) {
 
 export async function analyzeImage(imageBase64: string, mimeType: string, prompt: string) {
   try {
-    const response = await base44.integrations.Core.InvokeLLM({
+    const response = await invokeAI({
       model: MODEL_NAME,
       prompt: prompt,
       file_urls: [`data:${mimeType};base64,${imageBase64}`]
@@ -50,7 +42,7 @@ export async function chatWithGemini(prompt: string) {
   
   User: ${prompt}`;
   try {
-    const response = await base44.integrations.Core.InvokeLLM({ 
+    const response = await invokeAI({
       model: MODEL_NAME,
       prompt: fullPrompt
     });

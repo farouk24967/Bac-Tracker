@@ -5,6 +5,14 @@ import { Task, ScheduledSession, Language } from '../types';
 import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
 
 export const useReminders = (uid: string | undefined, lang: Language = 'fr') => {
+  const tDict = {
+    fr: { taskTitle: 'Rappel de tâche 🔔', taskMsg: (title: string) => `Il est l'heure de : ${title}`, sessionTitle: 'Rappel de session 🔔', sessionMsg: (title: string) => `Ta session commence : ${title}` },
+    en: { taskTitle: 'Task reminder 🔔', taskMsg: (title: string) => `It's time for: ${title}`, sessionTitle: 'Study session reminder 🔔', sessionMsg: (title: string) => `Your session starts now: ${title}` },
+    es: { taskTitle: 'Recordatorio de tarea 🔔', taskMsg: (title: string) => `Es hora de: ${title}`, sessionTitle: 'Recordatorio de sesión 🔔', sessionMsg: (title: string) => `Tu sesión comienza ahora: ${title}` },
+    ar: { taskTitle: 'تذكير بمهمة 🔔', taskMsg: (title: string) => `حان الوقت لـ: ${title}`, sessionTitle: 'تذكير بجلسة دراسة 🔔', sessionMsg: (title: string) => `تبدأ جلستك الآن: ${title}` }
+  };
+  const t = tDict[lang] || tDict.fr;
+
   useEffect(() => {
     if (!uid) return;
 
@@ -35,8 +43,8 @@ export const useReminders = (uid: string | undefined, lang: Language = 'fr') => 
             try {
               await addDoc(collection(db, 'notifications'), {
                 uid,
-                title: lang === 'ar' ? 'تذكير بمهمة 🔔' : 'Rappel de tâche 🔔',
-                message: lang === 'ar' ? `حان الوقت لـ: ${task.title}` : `Il est l'heure de : ${task.title}`,
+                title: t.taskTitle,
+                message: t.taskMsg(task.title),
                 type: 'task',
                 read: false,
                 createdAt: new Date().toISOString()
@@ -57,8 +65,8 @@ export const useReminders = (uid: string | undefined, lang: Language = 'fr') => 
             try {
               await addDoc(collection(db, 'notifications'), {
                 uid,
-                title: lang === 'ar' ? 'تذكير بجلسة دراسة 🔔' : 'Rappel de session 🔔',
-                message: lang === 'ar' ? `تبدأ جلستك الآن: ${session.title}` : `Ta session commence : ${session.title}`,
+                title: t.sessionTitle,
+                message: t.sessionMsg(session.title),
                 type: 'info',
                 read: false,
                 createdAt: new Date().toISOString()

@@ -1,14 +1,19 @@
 /// <reference types="vite/client" />
-import { createClient } from "@base44/sdk";
 import { db } from "../firebase";
 import { collection, addDoc } from "firebase/firestore";
+import { invokeAI } from "./aiProxy";
 
-const base44 = createClient({
-  appId: import.meta.env.VITE_BASE44_APP_ID || "69f8f56ca433d203293833a1",
-  headers: {
-    "api_key": import.meta.env.VITE_BASE44_API_KEY || "834f7448afe2478ca477d9961fbf71fc"
-  }
-});
+const localeFor = (lang: string) => lang === 'ar' ? 'ar-EG' : lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'fr-FR';
+
+const langText = (lang: string) => {
+  const d = {
+    fr: { taskAdded: (title: string) => `Tâche "${title}" ajoutée avec succès !`, sessionAdded: (title: string) => `Session "${title}" ajoutée avec succès au calendrier !` },
+    en: { taskAdded: (title: string) => `Task "${title}" added successfully!`, sessionAdded: (title: string) => `Session "${title}" added successfully to your calendar!` },
+    es: { taskAdded: (title: string) => `¡Tarea "${title}" añadida con éxito!`, sessionAdded: (title: string) => `¡Sesión "${title}" añadida con éxito a tu calendario!` },
+    ar: { taskAdded: (title: string) => `تم إضافة المهمة "${title}" بنجاح إلى مهامك!`, sessionAdded: (title: string) => `تم إضافة الحصة "${title}" بنجاح إلى التقويم الخاص بك!` }
+  };
+  return d[lang as keyof typeof d] || d.fr;
+};
 
 export const generateStudyAdvice = async (stream: string, average: number, target: number, lang: string = 'fr') => {
   const languageNames: Record<string, string> = {
@@ -20,8 +25,8 @@ export const generateStudyAdvice = async (stream: string, average: number, targe
   const targetLang = languageNames[lang] || 'français';
 
   const now = new Date();
-  const timeStr = now.toLocaleTimeString(lang === 'ar' ? 'ar-DZ' : 'fr-FR', { hour: '2-digit', minute: '2-digit' });
-  const dateStr = now.toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const timeStr = now.toLocaleTimeString(localeFor(lang), { hour: '2-digit', minute: '2-digit' });
+  const dateStr = now.toLocaleDateString(localeFor(lang), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
   const prompt = `En tant qu'expert du Bac en Algérie, donne des conseils personnalisés à un étudiant de la filière ${stream}. 
   Date actuelle : ${dateStr}, Heure : ${timeStr}.
@@ -30,7 +35,7 @@ export const generateStudyAdvice = async (stream: string, average: number, targe
   Réponds en ${targetLang} de manière motivante et structurée.`;
 
   try {
-    const response = await base44.integrations.Core.InvokeLLM({
+    const response = await invokeAI({
       prompt: prompt,
       model: "gemini_3_flash",
     });
@@ -52,8 +57,8 @@ export const chatWithAI = async (message: string, userProfile: any, chatHistory:
   const targetLang = languageNames[lang] || 'français';
 
   const now = new Date();
-  const timeStr = now.toLocaleTimeString(lang === 'ar' ? 'ar-DZ' : 'fr-FR', { hour: '2-digit', minute: '2-digit' });
-  const dateStr = now.toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const timeStr = now.toLocaleTimeString(localeFor(lang), { hour: '2-digit', minute: '2-digit' });
+  const dateStr = now.toLocaleDateString(localeFor(lang), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
   const systemInstruction = `Tu es "DzBac AI", un assistant pédagogique expert pour les étudiants du Bac en Algérie. 
   Ton but est d'aider l'étudiant à réussir son Bac avec la meilleure mention possible.
@@ -102,7 +107,7 @@ export const chatWithAI = async (message: string, userProfile: any, chatHistory:
   Sinon, réponds normalement en tant qu'assistant.`;
 
   try {
-    const response = await base44.integrations.Core.InvokeLLM({
+    const response = await invokeAI({
       prompt,
       model: "gemini_3_flash"
     });
@@ -130,7 +135,7 @@ export const chatWithAI = async (message: string, userProfile: any, chatHistory:
               uid: userProfile.uid,
               createdAt: new Date().toISOString()
             });
-            successMessages.push(lang === 'ar' ? `تم إضافة المهمة "${args.title}" بنجاح إلى مهامك!` : `Tâche "${args.title}" ajoutée avec succès !`);
+            successMessages.push(langText(lang).taskAdded(args.title));
           } else if (call.name === "addScheduledSession") {
             const args = call.args;
             await addDoc(collection(db, 'scheduledSessions'), {
@@ -144,7 +149,7 @@ export const chatWithAI = async (message: string, userProfile: any, chatHistory:
               uid: userProfile.uid,
               createdAt: new Date().toISOString()
             });
-            successMessages.push(lang === 'ar' ? `تم إضافة الحصة "${args.title}" بنجاح إلى التقويم الخاص بك!` : `Session "${args.title}" ajoutée avec succès au calendrier !`);
+            successMessages.push(langText(lang).sessionAdded(args.title));
           }
           
           return successMessages.join("\n");
@@ -187,7 +192,7 @@ export const analyzePerformance = async (userProfile: any, progress: any[]) => {
   Réponds en ${targetLang} de manière structurée avec des conseils spécifiques au programme algérien.`;
 
   try {
-    const response = await base44.integrations.Core.InvokeLLM({
+    const response = await invokeAI({
       prompt: prompt,
       model: "gemini_3_flash"
     });
@@ -227,7 +232,7 @@ export const generateFlashcards = async (topic: string, stream: string, lang: st
       file_urls.push(`data:${fileData.mimeType};base64,${fileData.data}`);
     }
 
-    const response = await base44.integrations.Core.InvokeLLM({
+    const response = await invokeAI({
       prompt: prompt,
       model: "gemini_3_flash",
       ...(file_urls.length > 0 ? { file_urls } : {})
@@ -265,7 +270,7 @@ export const generateModernSummary = async (topic: string, stream: string, lang:
       file_urls.push(`data:${fileData.mimeType};base64,${fileData.data}`);
     }
 
-    const response = await base44.integrations.Core.InvokeLLM({
+    const response = await invokeAI({
       prompt: prompt,
       model: "gemini_3_flash",
       ...(file_urls.length > 0 ? { file_urls } : {})
@@ -319,7 +324,7 @@ export const generateStudySchedule = async (tasks: any[], goals: any[], userProf
   Assure-toi que les dates sont au format YYYY-MM-DD et commencent à partir de ${today}. Les heures (startTime) doivent être réalistes (entre 08:00 et 22:30) et ne pas se chevaucher.`;
 
   try {
-    const response = await base44.integrations.Core.InvokeLLM({
+    const response = await invokeAI({
       prompt: prompt,
       model: "gemini_3_flash",
       response_json_schema: {
@@ -373,7 +378,7 @@ export const generateDailyReport = async (userProfile: any, activities: any[], l
   Réponds en ${targetLang} de manière structurée et chaleureuse. Utilise le format Markdown.`;
 
   try {
-    const response = await base44.integrations.Core.InvokeLLM({
+    const response = await invokeAI({
       prompt: prompt,
       model: "gemini_3_flash"
     });

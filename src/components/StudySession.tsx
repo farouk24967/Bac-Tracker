@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Clock, Play, Square, Timer, Award, Star } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { UserProfile, Language } from '../types';
-import { translations } from '../translations';
+import { safeT } from '../translations';
 import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
@@ -22,7 +22,7 @@ export const StudySession: React.FC<StudySessionProps> = ({ userProfile, onStrea
   const [showSummary, setShowSummary] = useState(false);
 
   const lang: Language = userProfile.language || 'fr';
-  const t = translations[lang];
+  const t = safeT(lang);
 
   const durations = [
     { label: '25m', value: 1500 },

@@ -44,13 +44,13 @@ import { db } from '../firebase';
 import { UserProfile, Task, SubjectProgress, Language, ScheduledSession, StudyGoal } from '../types';
 import { SUBJECTS_BY_STREAM, STREAMS } from '../constants';
 import { cn } from '../lib/utils';
-import { translations } from '../translations';
 import { StudyGoals } from './StudyGoals';
 import { StudyCalendar } from './StudyCalendar';
 import { StreakAnimation } from './StreakAnimation';
 import { StudySession } from './StudySession';
 import { DailyMotivation } from './DailyMotivation';
 import { SubjectRaceChart } from './SubjectRaceChart';
+import { BacCountdown } from './BacCountdown';
 import { Flame } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
 import { updateStreak, checkBadges, checkXPProgression } from '../lib/gamificationUtils';
@@ -66,6 +66,323 @@ import {
   CartesianGrid, 
   Tooltip 
 } from 'recharts';
+
+const locale = (lang: Language) => lang === 'ar' ? 'ar-EG' : lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'fr-FR';
+
+const tDict = {
+  fr: {
+    greeting: (name: string) => `Bonjour, ${name}`,
+    readyToStudy: "Prêt à transformer tes efforts en réussite aujourd'hui ?",
+    days: 'Jours',
+    streakToBonus: (n: number) => `+${n}j avant le prochain bonus`,
+    upcomingSessions: 'Prochaines sessions',
+    seeAll: 'Voir tout',
+    noSessionsScheduled: 'Aucune session programmée pour le moment.',
+    study_session: "Session d'étude",
+    today: "Aujourd'hui",
+    tasks: 'tâches',
+    searchSubject: 'Rechercher une matière...',
+    new_task: 'Nouvelle tâche...',
+    priorityLow: 'Basse',
+    priorityMedium: 'Moyenne',
+    priorityHigh: 'Haute',
+    subjectLabel: 'Matière',
+    add: 'Ajouter',
+    reminderLabel: 'Rappel:',
+    cancel: 'Annuler',
+    allPriorities: 'Priorités',
+    dueDateLabel: "Date d'échéance",
+    prioritySort: 'Priorité',
+    sortAscending: 'Croissant',
+    sortDescending: 'Décroissant',
+    generalSubject: 'Général',
+    progressLabel: 'Progression',
+    dragToAdjust: 'Glisser pour ajuster',
+    noTasksToday: "Aucune tâche pour aujourd'hui. Profite bien !",
+    overviewBySubject: "Vue d'ensemble par matière",
+    resetTitle: 'Réinitialiser',
+    subjectStatus: 'Statut détaillé par matière',
+    completedBadge: 'Terminé',
+    goals: 'Objectifs',
+    studyGoalsHeader: 'Objectifs de révision',
+    reachedGoals: 'atteints',
+    noGoals: 'Aucun objectif de révision fixé pour le moment.',
+    quickAccess: 'Accès rapide',
+    summarizeLesson: 'Résumer cours',
+    createQuiz: 'Créer quiz',
+    viewSchedule: 'Voir planning',
+    planTomorrow: 'Planning demain',
+    nothingPlannedTomorrow: 'Rien de prévu pour demain encore.',
+    timeStats: 'Statistiques de Temps',
+    weeklyStudyRate: "Taux d'heures et minutes d'étude hebdomadaire",
+    study: 'Étude',
+    deleteTitle: 'Supprimer ?',
+    deleteConfirmMsg: (title: string) => `Es-tu sûr de vouloir supprimer "${title}" ?`,
+    delete: 'Supprimer',
+    performanceOptimized: 'Performance optimisée',
+    focusTitle: 'Focus',
+    details: 'Détails',
+    neglectedSubjects: 'Matières Négligées',
+    weakSubjects: 'Matières Faibles',
+    allUnderControl: 'Tout est sous contrôle !',
+    focus: 'Focus',
+    pause: 'Pause',
+    chooseSubject: 'Matière à réviser',
+    startSession: 'Démarrer session',
+    stopSession: 'Arrêter session',
+    memoryOfToday: 'Mémoire du jour',
+    completedLog: (title: string) => `Terminé : ${title}`,
+    noMemories: 'Aucun souvenir pour le moment.',
+    reminderTitle: 'Rappel de tâche ! 🔔',
+    reminderMessage: (title: string) => `C'est l'heure de : ${title}`,
+    streakBrokenTitle: 'Série interrompue ⚠️',
+    streakBrokenMessage: "Tu as manqué un jour ! Recommence une série aujourd'hui.",
+    newDayTitle: 'Nouvelle journée ! ✨',
+    newDayMessage: 'Les tâches et graphiques ont été réinitialisés pour une nouvelle journée de réussite.',
+    taskCompletedTitle: 'Tâche terminée ✅',
+    taskCompletedMsg: (title: string) => `Bravo 🎉 tu as terminé "${title}" ! (+10 XP)`,
+    streakTitle: 'Streak 🔥',
+    streakMsg: (days: number) => `Tu es à ${days} jours de streak 🔥 continue ! (+XP Bonus)`,
+    reminderSetTitle: 'Rappel configuré 🔔',
+    reminderSetMessage: 'On te rappellera ça le moment venu !',
+    progressResetTitle: 'Progression réinitialisée',
+    progressResetMessage: 'Toutes les progressions ont été remises à zéro.'
+  },
+  en: {
+    greeting: (name: string) => `Hello, ${name}`,
+    readyToStudy: 'Ready to turn your effort into success today?',
+    days: 'Days',
+    streakToBonus: (n: number) => `+${n}d before the next bonus`,
+    upcomingSessions: 'Upcoming sessions',
+    seeAll: 'View all',
+    noSessionsScheduled: 'No sessions scheduled for now.',
+    study_session: 'Study Session',
+    today: 'Today',
+    tasks: 'tasks',
+    searchSubject: 'Search for a subject...',
+    new_task: 'New task...',
+    priorityLow: 'Low',
+    priorityMedium: 'Medium',
+    priorityHigh: 'High',
+    subjectLabel: 'Subject',
+    add: 'Add',
+    reminderLabel: 'Reminder:',
+    cancel: 'Cancel',
+    allPriorities: 'All priorities',
+    dueDateLabel: 'Due date',
+    prioritySort: 'Priority',
+    sortAscending: 'Ascending',
+    sortDescending: 'Descending',
+    generalSubject: 'General',
+    progressLabel: 'Progress',
+    dragToAdjust: 'Drag to adjust',
+    noTasksToday: 'No tasks for today. Enjoy your time!',
+    overviewBySubject: 'Overview by subject',
+    resetTitle: 'Reset',
+    subjectStatus: 'Detailed status by subject',
+    completedBadge: 'Completed',
+    goals: 'Goals',
+    studyGoalsHeader: 'Study goals',
+    reachedGoals: 'reached',
+    noGoals: 'No study goals set for now.',
+    quickAccess: 'Quick access',
+    summarizeLesson: 'Summarize lesson',
+    createQuiz: 'Create quiz',
+    viewSchedule: 'View schedule',
+    planTomorrow: 'Plan tomorrow',
+    nothingPlannedTomorrow: 'Nothing planned for tomorrow yet.',
+    timeStats: 'Time statistics',
+    weeklyStudyRate: 'Weekly study hours and minutes rate',
+    study: 'Study',
+    deleteTitle: 'Delete?',
+    deleteConfirmMsg: (title: string) => `Are you sure you want to delete "${title}"?`,
+    delete: 'Delete',
+    performanceOptimized: 'Optimized performance',
+    focusTitle: 'Focus',
+    details: 'Details',
+    neglectedSubjects: 'Neglected Subjects',
+    weakSubjects: 'Weak Subjects',
+    allUnderControl: 'Everything is under control!',
+    focus: 'Focus',
+    pause: 'Break',
+    chooseSubject: 'Subject to review',
+    startSession: 'Start session',
+    stopSession: 'Stop session',
+    memoryOfToday: 'Memory of the day',
+    completedLog: (title: string) => `Completed: ${title}`,
+    noMemories: 'No memories for now.',
+    reminderTitle: 'Task reminder! 🔔',
+    reminderMessage: (title: string) => `It's time for: ${title}`,
+    streakBrokenTitle: 'Streak broken ⚠️',
+    streakBrokenMessage: 'You missed a day! Start a new streak today.',
+    newDayTitle: 'New day! ✨',
+    newDayMessage: 'Tasks and charts have been reset for a new day of success.',
+    taskCompletedTitle: 'Task completed ✅',
+    taskCompletedMsg: (title: string) => `Well done 🎉 you finished "${title}"! (+10 XP)`,
+    streakTitle: 'Streak 🔥',
+    streakMsg: (days: number) => `You're on a ${days} day streak 🔥 keep going! (+XP Bonus)`,
+    reminderSetTitle: 'Reminder set 🔔',
+    reminderSetMessage: "We'll remind you when the time comes!",
+    progressResetTitle: 'Progress reset',
+    progressResetMessage: 'All progressions have been reset to zero.'
+  },
+  es: {
+    greeting: (name: string) => `Hola, ${name}`,
+    readyToStudy: '¿Listo para convertir tu esfuerzo en éxito hoy?',
+    days: 'Días',
+    streakToBonus: (n: number) => `+${n}d para el próximo bonus`,
+    upcomingSessions: 'Próximas sesiones',
+    seeAll: 'Ver todo',
+    noSessionsScheduled: 'No hay sesiones programadas por ahora.',
+    study_session: 'Sesión de estudio',
+    today: 'Hoy',
+    tasks: 'tareas',
+    searchSubject: 'Buscar una materia...',
+    new_task: 'Nueva tarea...',
+    priorityLow: 'Baja',
+    priorityMedium: 'Media',
+    priorityHigh: 'Alta',
+    subjectLabel: 'Materia',
+    add: 'Añadir',
+    reminderLabel: 'Recordatorio:',
+    cancel: 'Cancelar',
+    allPriorities: 'Todas las prioridades',
+    dueDateLabel: 'Fecha de vencimiento',
+    prioritySort: 'Prioridad',
+    sortAscending: 'Ascendente',
+    sortDescending: 'Descendente',
+    generalSubject: 'General',
+    progressLabel: 'Progreso',
+    dragToAdjust: 'Arrastra para ajustar',
+    noTasksToday: 'No hay tareas para hoy. ¡Disfruta!',
+    overviewBySubject: 'Resumen por materia',
+    resetTitle: 'Restablecer',
+    subjectStatus: 'Estado detallado por materia',
+    completedBadge: 'Completado',
+    goals: 'Objetivos',
+    studyGoalsHeader: 'Objetivos de revisión',
+    reachedGoals: 'alcanzados',
+    noGoals: 'No hay objetivos de revisión fijados por ahora.',
+    quickAccess: 'Acceso rápido',
+    summarizeLesson: 'Resumir lección',
+    createQuiz: 'Crear quiz',
+    viewSchedule: 'Ver planificación',
+    planTomorrow: 'Plan de mañana',
+    nothingPlannedTomorrow: 'Nada planificado para mañana todavía.',
+    timeStats: 'Estadísticas de tiempo',
+    weeklyStudyRate: 'Tasa de horas y minutos de estudio semanal',
+    study: 'Estudio',
+    deleteTitle: '¿Eliminar?',
+    deleteConfirmMsg: (title: string) => `¿Seguro que quieres eliminar "${title}"?`,
+    delete: 'Eliminar',
+    performanceOptimized: 'Rendimiento optimizado',
+    focusTitle: 'Foco',
+    details: 'Detalles',
+    neglectedSubjects: 'Materias Descuidadas',
+    weakSubjects: 'Materias Débiles',
+    allUnderControl: '¡Todo bajo control!',
+    focus: 'Enfoque',
+    pause: 'Descanso',
+    chooseSubject: 'Materia a repasar',
+    startSession: 'Iniciar sesión',
+    stopSession: 'Detener sesión',
+    memoryOfToday: 'Memoria del día',
+    completedLog: (title: string) => `Completado: ${title}`,
+    noMemories: 'No hay recuerdos por ahora.',
+    reminderTitle: '¡Recordatorio de tarea! 🔔',
+    reminderMessage: (title: string) => `Es hora de: ${title}`,
+    streakBrokenTitle: 'Racha interrumpida ⚠️',
+    streakBrokenMessage: '¡Has faltado un día! Empieza una nueva racha hoy.',
+    newDayTitle: '¡Nuevo día! ✨',
+    newDayMessage: 'Las tareas y gráficos se han reiniciado para un nuevo día de éxito.',
+    taskCompletedTitle: 'Tarea completada ✅',
+    taskCompletedMsg: (title: string) => `¡Bien hecho 🎉 has terminado "${title}"! (+10 XP)`,
+    streakTitle: 'Racha 🔥',
+    streakMsg: (days: number) => `¡Llevas una racha de ${days} días 🔥 sigue así! (+XP Bonus)`,
+    reminderSetTitle: 'Recordatorio configurado 🔔',
+    reminderSetMessage: '¡Te lo recordaremos cuando llegue el momento!',
+    progressResetTitle: 'Progreso restablecido',
+    progressResetMessage: 'Todas las progresiones se han puesto a cero.'
+  },
+  ar: {
+    greeting: (name: string) => `مرحباً، ${name}`,
+    readyToStudy: 'جاهز للدراسة اليوم؟',
+    days: 'أيام',
+    streakToBonus: (n: number) => `${n} أيام للمكافأة القادمة`,
+    upcomingSessions: 'الجلسات القادمة',
+    seeAll: 'رؤية الكل',
+    noSessionsScheduled: 'لا توجد جلسات مبرمجة حالياً.',
+    study_session: 'جلسة مراجعة',
+    today: 'اليوم',
+    tasks: 'مهام',
+    searchSubject: 'البحث عن مادة...',
+    new_task: 'مهمة جديدة...',
+    priorityLow: 'منخفضة',
+    priorityMedium: 'متوسطة',
+    priorityHigh: 'عالية',
+    subjectLabel: 'المادة',
+    add: 'إضافة',
+    reminderLabel: 'تذكير:',
+    cancel: 'إلغاء',
+    allPriorities: 'كل الأولويات',
+    dueDateLabel: 'تاريخ الاستحقاق',
+    prioritySort: 'الأولوية',
+    sortAscending: 'تصاعدي',
+    sortDescending: 'تنازلي',
+    generalSubject: 'عام',
+    progressLabel: 'التقدم',
+    dragToAdjust: 'اسحب للتعديل',
+    noTasksToday: 'لا توجد مهام لليوم. استمتع بوقتك!',
+    overviewBySubject: 'نظرة عامة حسب المادة',
+    resetTitle: 'إعادة ضبط',
+    subjectStatus: 'حالة المواد',
+    completedBadge: 'مكتمل',
+    goals: 'أهداف',
+    studyGoalsHeader: 'أهداف الدراسة',
+    reachedGoals: 'مكتمل',
+    noGoals: 'لم يتم تحديد أهداف مراجعة بعد.',
+    quickAccess: 'وصول سريع',
+    summarizeLesson: 'تلخيص درس',
+    createQuiz: 'إنشاء كويز',
+    viewSchedule: 'رؤية الجدول',
+    planTomorrow: 'تخطيط الغد',
+    nothingPlannedTomorrow: 'لا يوجد شيء مخطط له غداً بعد.',
+    timeStats: 'إحصائيات الوقت',
+    weeklyStudyRate: 'معدل الساعات والدقائق',
+    study: 'دراسة',
+    deleteTitle: 'حذف المهمة؟',
+    deleteConfirmMsg: (title: string) => `هل أنت متأكد أنك تريد حذف "${title}"؟`,
+    delete: 'حذف',
+    performanceOptimized: 'أداء محسّن',
+    focusTitle: 'نقاط اليقظة',
+    details: 'التفاصيل',
+    neglectedSubjects: 'مواد مهملة',
+    weakSubjects: 'مواد ضعيفة',
+    allUnderControl: 'كل شيء تحت السيطرة !',
+    focus: 'عمل',
+    pause: 'راحة',
+    chooseSubject: 'اختر مادة للتركيز',
+    startSession: 'ابدأ الجلسة',
+    stopSession: 'إيقاف الجلسة',
+    memoryOfToday: 'ذاكرة اليوم',
+    completedLog: (title: string) => `أكملت: ${title}`,
+    noMemories: 'لا توجد ذكريات حالياً.',
+    reminderTitle: 'تذكير بالمهمة! 🔔',
+    reminderMessage: (title: string) => `حان وقت: ${title}`,
+    streakBrokenTitle: 'انقطعت السلسلة ⚠️',
+    streakBrokenMessage: 'لقد فاتك يوم! ابدأ سلسلة جديدة اليوم.',
+    newDayTitle: 'يوم جديد! ✨',
+    newDayMessage: 'تم إعادة ضبط المهام والرسوم البيانية ليوم جديد من النجاح.',
+    taskCompletedTitle: 'اكتملت المهمة ✅',
+    taskCompletedMsg: (title: string) => `أحسنت 🎉 لقد انتهيت من "${title}"! (+10 XP)`,
+    streakTitle: 'سلسلة 🔥',
+    streakMsg: (days: number) => `أنت في سلسلة من ${days} أيام 🔥 استمر! (+XP Bonus)`,
+    reminderSetTitle: 'تم ضبط التذكير 🔔',
+    reminderSetMessage: 'سوف نذكرك في البكالوريا!',
+    progressResetTitle: 'تم إعادة ضبط التقدم',
+    progressResetMessage: 'تم تصفير جميع نسب التقدم.'
+  }
+};
 
 interface DashboardProps {
   userProfile: UserProfile;
@@ -86,121 +403,10 @@ const getSubjectColor = (subject: string = '') => {
   if (s.includes('islam') || s.includes('شريعة') || s.includes('إسلامية')) return { bg: 'bg-teal-50', border: 'border-teal-100', text: 'text-teal-700', marker: 'bg-teal-500', light: 'bg-teal-100' };
   if (s.includes('compt') || s.includes('محاسبة') || s.includes('تسيير')) return { bg: 'bg-violet-50', border: 'border-violet-100', text: 'text-violet-700', marker: 'bg-violet-500', light: 'bg-violet-100' };
   if (s.includes('techno') || s.includes('تكنولوجيا')) return { bg: 'bg-lime-50', border: 'border-lime-100', text: 'text-lime-700', marker: 'bg-lime-500', light: 'bg-lime-100' };
+  if (s.includes('info') || s.includes('إعلام')) return { bg: 'bg-cyan-50', border: 'border-cyan-100', text: 'text-cyan-700', marker: 'bg-cyan-500', light: 'bg-cyan-100' };
   if (s.includes('droit') || s.includes('قانون')) return { bg: 'bg-red-50', border: 'border-red-100', text: 'text-red-700', marker: 'bg-red-500', light: 'bg-red-100' };
   if (s.includes('eco') || s.includes('اقتصاد')) return { bg: 'bg-cyan-50', border: 'border-cyan-100', text: 'text-cyan-700', marker: 'bg-cyan-500', light: 'bg-cyan-100' };
   return { bg: 'bg-slate-50', border: 'border-slate-100', text: 'text-slate-700', marker: 'bg-slate-500', light: 'bg-slate-100' };
-};
-
-const CountdownCircle = ({ value, max, label, color, isDark }: { value: number, max: number, label: string, color: string, isDark?: boolean }) => {
-  const radius = 28;
-  const circumference = 2 * Math.PI * radius;
-  const percentage = Math.min((value / max) * 100, 100);
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
-
-  return (
-    <div className="flex flex-col items-center">
-      <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24">
-        <svg className="w-full h-full transform -rotate-90">
-          <circle
-            cx="50%"
-            cy="50%"
-            r={radius}
-            className={isDark ? "stroke-white/10" : "stroke-slate-100"}
-            strokeWidth="4"
-            fill="transparent"
-          />
-          <circle
-            cx="50%"
-            cy="50%"
-            r={radius}
-            stroke={color}
-            strokeWidth="4"
-            fill="transparent"
-            strokeDasharray={circumference}
-            style={{ strokeDashoffset, transition: 'stroke-dashoffset 1s linear' }}
-            strokeLinecap="round"
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center -space-y-0.5">
-          <span className={cn("text-[8px] sm:text-[10px] font-bold uppercase tracking-tighter sm:tracking-normal", isDark ? "text-white/40" : "text-slate-400")}>{label}</span>
-          <span className={cn("text-lg sm:text-2xl font-black tabular-nums", isDark ? "text-white" : "text-slate-800")}>{value}</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const CountdownTimer: React.FC<{ lang: Language }> = ({ lang }) => {
-  const bacDate = new Date('2026-06-07T08:00:00');
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0
-  });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      const difference = bacDate.getTime() - now.getTime();
-
-      if (difference > 0) {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60)
-        });
-      }
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  const labels = {
-    fr: { d: 'jours', h: 'heur', m: 'min', s: 'sec' }, // Shortened labels to fit one line
-    ar: { d: 'يوم', h: 'سعة', m: 'دقة', s: 'ثان' }
-  };
-
-  const l = labels[lang === 'ar' ? 'ar' : 'fr'];
-
-  return (
-    <div className="bg-slate-900 border border-slate-800 p-5 md:p-8 rounded-3xl md:rounded-[40px] shadow-2xl flex flex-col items-center justify-center text-center relative overflow-hidden group min-h-[220px]">
-      {/* Decorative background element */}
-      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary-600/20 via-transparent to-emerald-600/10 pointer-events-none" />
-      <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl group-hover:bg-primary-500/20 transition-all duration-700" />
-      
-      <div className="relative z-10 w-full">
-        <div className="flex items-center justify-center gap-1 sm:gap-1.5 mb-6 md:mb-8">
-          <CountdownCircle value={timeLeft.days} max={365} label={l.d} color="#fbbf24" isDark />
-          <CountdownCircle value={timeLeft.hours} max={24} label={l.h} color="#38bdf8" isDark />
-          <CountdownCircle value={timeLeft.minutes} max={60} label={l.m} color="#34d399" isDark />
-          <CountdownCircle value={timeLeft.seconds} max={60} label={l.s} color="#2dd4bf" isDark />
-        </div>
-
-        <div className="space-y-2 md:space-y-3">
-          <div className="flex items-center justify-center gap-2">
-            <div className="h-px w-6 md:w-8 bg-white/10" />
-            <p className="text-[8px] md:text-[10px] text-white/40 font-black uppercase tracking-[0.2em]">
-              Baccalauréat 2026
-            </p>
-            <div className="h-px w-6 md:w-8 bg-white/10" />
-          </div>
-          
-          <p className="text-[10px] md:text-[13px] text-slate-400 font-medium leading-relaxed px-4">
-            {lang === 'ar' 
-              ? "فترة امتحانات البكالوريا:" 
-              : "Période du Bac :"}
-          </p>
-          <p className="text-xs md:text-md font-black text-white bg-white/5 py-1.5 md:py-2 px-3 md:px-4 rounded-xl md:rounded-2xl border border-white/5 inline-block">
-            {lang === 'ar' 
-              ? "07 - 11 جوان 2026" 
-              : "07 — 11 Juin 2026"}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
 };
 
 export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, onManualSessionChange }) => {
@@ -224,7 +430,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
   const stream = STREAMS.find(s => s === streamRaw || s.toLowerCase() === streamRaw.toLowerCase()) || STREAMS[0];
   const subjects = SUBJECTS_BY_STREAM[stream] || [];
   const lang: Language = userProfile.language || 'fr';
-  const t = translations[lang];
+  const t = tDict[lang] || tDict.fr;
 
   useEffect(() => {
     const path = 'tasks';
@@ -288,8 +494,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
   }, [tasks, userProfile.uid, lang]);
 
   const sendTaskNotification = async (task: Task) => {
-    const title = lang === 'ar' ? "تذكير بالمهمة! 🔔" : "Rappel de tâche ! 🔔";
-    const message = lang === 'ar' ? `حان وقت: ${task.title}` : `C'est l'heure de : ${task.title}`;
+    const title = t.reminderTitle;
+    const message = t.reminderMessage(task.title);
     
     // 1. In-app notification
     await addNotification(title, message, 'task');
@@ -351,8 +557,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
       if (lastActivity !== today && lastActivity !== yesterdayStr && lastActivity !== undefined) {
         updates.currentStreak = 0;
         await addNotification(
-          lang === 'ar' ? "انقطعت السلسلة ⚠️" : "Série interrompue ⚠️", 
-          lang === 'ar' ? "لقد فاتك يوم! ابدأ سلسلة جديدة اليوم." : "Tu as manqué un jour ! Recommence une série aujourd'hui.", 
+          t.streakBrokenTitle, 
+          t.streakBrokenMessage, 
           'warning'
         );
       }
@@ -375,8 +581,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
       await updateDoc(doc(db, 'users', userProfile.uid), updates);
 
       await addNotification(
-        lang === 'ar' ? "يوم جديد! ✨" : "Nouvelle journée ! ✨",
-        lang === 'ar' ? "تم إعادة ضبط المهام والرسوم البيانية ليوم جديد من النجاح." : "Les tâches et graphiques ont été réinitialisés pour une nouvelle journée de réussite.",
+        t.newDayTitle,
+        t.newDayMessage,
         'success'
       );
     };
@@ -453,25 +659,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
       });
 
       // Task completed notification
-      const messages = {
-        fr: `Bravo 🎉 tu as terminé "${task.title}" ! (+10 XP)`,
-        en: `Well done 🎉 you finished "${task.title}"! (+10 XP)`,
-        ar: `أحسنت 🎉 لقد انتهيت من "${task.title}"! (+10 XP)`,
-        es: `¡Bien hecho 🎉 has terminado "${task.title}"! (+10 XP)`
-      };
-      await addNotification("Tâche terminée ✅", messages[lang], 'success');
+      await addNotification(t.taskCompletedTitle, t.taskCompletedMsg(task.title), 'success');
 
       // Streak logic
       const newStreak = await updateStreak(userProfile);
       if (newStreak > userProfile.currentStreak) {
         setShowStreakAnim(true);
-        const streakMessages = {
-          fr: `Tu es à ${newStreak} jours de streak 🔥 continue ! (+XP Bonus)`,
-          en: `You're on a ${newStreak} day streak 🔥 keep going! (+XP Bonus)`,
-          ar: `أنت في سلسلة من ${newStreak} أيام 🔥 استمر! (+XP Bonus)`,
-          es: `¡Llevas una racha de ${newStreak} días 🔥 sigue así! (+XP Bonus)`
-        };
-        await addNotification("Streak 🔥", streakMessages[lang], 'success');
+        await addNotification(t.streakTitle, t.streakMsg(newStreak), 'success');
       }
 
       // Check badges
@@ -543,8 +737,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
       });
       
       await addNotification(
-        lang === 'ar' ? "تم ضبط التذكير 🔔" : "Rappel configuré 🔔",
-        lang === 'ar' ? `سوف نذكرك في البكالوريا!` : `On te rappellera ça le moment venu !`,
+        t.reminderSetTitle,
+        t.reminderSetMessage,
         'success'
       );
     } catch (e) {
@@ -599,8 +793,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
     await Promise.all(batch);
     
     await addNotification(
-      lang === 'ar' ? "تم إعادة ضبط التقدم" : "Progression réinitialisée",
-      lang === 'ar' ? "تم تصفير جميع نسب التقدم." : "Toutes les progressions ont été remises à zéro.",
+      t.progressResetTitle,
+      t.progressResetMessage,
       'info'
     );
   };
@@ -739,7 +933,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <h2 className="text-xl md:text-3xl font-black text-slate-900 leading-tight">
-                {lang === 'ar' ? `مرحباً، ${userProfile.displayName}` : `Bonjour, ${userProfile.displayName}`} 👋
+                {t.greeting(userProfile.displayName)} 👋
               </h2>
               {userProfile.title && (
                 <span className="px-2 py-0.5 md:px-3 md:py-1 bg-primary-600 text-white text-[8px] md:text-[10px] font-black rounded-full shadow-sm">
@@ -748,7 +942,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
               )}
             </div>
             <p className="text-slate-500 font-medium text-sm md:text-lg">
-              {lang === 'ar' ? "جاهز للدراسة اليوم؟" : "Prêt à transformer tes efforts en réussite aujourd'hui ?"}
+              {t.readyToStudy}
             </p>
           </div>
         </div>
@@ -764,12 +958,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
             <div>
               <p className="text-[8px] md:text-[10px] font-black text-orange-400 uppercase tracking-widest leading-none mb-1">Streak</p>
               <div className="flex items-baseline gap-2">
-                <p className="text-xl md:text-2xl font-black text-orange-600 leading-none">{userProfile.currentStreak || 0} {lang === 'ar' ? 'أيام' : 'Jours'}</p>
+                <p className="text-xl md:text-2xl font-black text-orange-600 leading-none">{userProfile.currentStreak || 0} {t.days}</p>
                 {userProfile.currentStreak > 0 && userProfile.currentStreak < 7 && (
                   <span className="text-[9px] font-bold text-orange-400/80 italic">
-                    {lang === 'ar' 
-                      ? `${userProfile.currentStreak < 3 ? 3 - userProfile.currentStreak : 7 - userProfile.currentStreak} أيام للمكافأة القادمة` 
-                      : `+${userProfile.currentStreak < 3 ? 3 - userProfile.currentStreak : 7 - userProfile.currentStreak}j avant le prochain bonus`}
+                    {t.streakToBonus(userProfile.currentStreak < 3 ? 3 - userProfile.currentStreak : 7 - userProfile.currentStreak)}
                   </span>
                 )}
               </div>
@@ -783,13 +975,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
         <div className="flex items-center justify-between mb-6 md:mb-8">
           <h3 className="text-lg md:text-2xl font-black text-slate-900 flex items-center gap-2 md:gap-3">
             <Calendar className="w-5 h-5 md:w-6 md:h-6 text-primary-600" />
-            {lang === 'ar' ? "الجلسات القادمة" : "Prochaines sessions"}
+            {t.upcomingSessions}
           </h3>
           <button 
             onClick={() => onTabChange?.('calendar')}
             className="text-primary-600 font-bold text-xs md:text-sm hover:underline"
           >
-            {lang === 'ar' ? "رؤية الكل" : "Voir tout"}
+            {t.seeAll}
           </button>
         </div>
         
@@ -809,7 +1001,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                  <div className="flex items-center gap-4 text-slate-500 font-bold text-sm">
                     <div className="flex items-center gap-1.5 min-w-0">
                       <Calendar className="w-4 h-4 shrink-0" />
-                      <span className="truncate">{new Date(session.date).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'fr-FR', { day: 'numeric', month: 'short' })}</span>
+                      <span className="truncate">{new Date(session.date).toLocaleDateString(locale(lang), { day: 'numeric', month: 'short' })}</span>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <Clock className="w-4 h-4 shrink-0" />
@@ -825,7 +1017,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
               <Calendar className="w-6 h-6 text-slate-200" />
             </div>
             <p className="text-slate-400 font-bold italic text-sm">
-              {lang === 'ar' ? "لا توجد جلسات مبرمجة حالياً." : "Aucune session programmée pour le moment."}
+              {t.noSessionsScheduled}
             </p>
           </div>
         )}
@@ -842,7 +1034,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
         />
 
         {/* Compte à Rebours */}
-        <CountdownTimer lang={lang} />
+        <BacCountdown lang={lang} userProfile={userProfile} />
 
         {/* Session d'étude / Pomodoro */}
         <div className="bg-white p-6 md:p-8 rounded-3xl md:rounded-[40px] shadow-sm border border-slate-100 flex flex-col">
@@ -880,9 +1072,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
           <div className="bg-white p-6 md:p-8 rounded-3xl md:rounded-[40px] shadow-sm border border-slate-100">
             <div className="flex items-center justify-between mb-6 md:mb-8">
               <div>
-                <h3 className="text-xl md:text-2xl font-black text-slate-900">{lang === 'ar' ? "اليوم" : "Aujourd'hui"}</h3>
+                <h3 className="text-xl md:text-2xl font-black text-slate-900">{t.today}</h3>
                 <p className="text-slate-400 font-medium text-xs md:text-sm mt-1">
-                  {completedToday}/{todayTasks.length} {lang === 'ar' ? "مهام" : "tâches"}
+                  {completedToday}/{todayTasks.length} {t.tasks}
                 </p>
               </div>
               <div className="text-right">
@@ -907,7 +1099,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                       type="text"
                       value={subjectSearch}
                       onChange={(e) => setSubjectSearch(e.target.value)}
-                      placeholder={lang === 'ar' ? "البحث عن مادة..." : "Rechercher une matière..."}
+                      placeholder={t.searchSubject}
                       className="w-full bg-slate-50 border-none rounded-2xl pl-11 pr-6 py-3 text-sm focus:ring-2 focus:ring-primary-100 outline-none transition-all font-medium text-slate-600 shadow-inner"
                     />
                   </div>
@@ -955,16 +1147,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                       onChange={(e) => setNewTaskPriority(e.target.value as any)}
                       className="bg-slate-50 border-2 border-transparent focus:border-primary-500 rounded-2xl px-4 py-4 text-sm outline-none transition-all text-slate-600 font-bold shadow-inner"
                     >
-                      <option value="low">{lang === 'ar' ? 'منخفضة' : 'Basse'}</option>
-                      <option value="medium">{lang === 'ar' ? 'متوسطة' : 'Moyenne'}</option>
-                      <option value="high">{lang === 'ar' ? 'عالية' : 'Haute'}</option>
+                      <option value="low">{t.priorityLow}</option>
+                      <option value="medium">{t.priorityMedium}</option>
+                      <option value="high">{t.priorityHigh}</option>
                     </select>
                     <select
                       value={selectedSubject}
                       onChange={(e) => setSelectedSubject(e.target.value)}
                       className="bg-slate-50 border-2 border-transparent focus:border-primary-500 rounded-2xl px-4 py-4 text-sm outline-none transition-all text-slate-600 font-bold max-w-[150px] shadow-inner"
                     >
-                      <option value="">{lang === 'ar' ? 'المادة' : 'Matière'}</option>
+                      <option value="">{t.subjectLabel}</option>
                       {subjects.map(s => (
                         <option key={s} value={s}>{s}</option>
                       ))}
@@ -981,14 +1173,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                     )}
                   >
                     <Plus className="w-6 h-6" />
-                    <span className="font-bold">{lang === 'ar' ? 'إضافة' : 'Ajouter'}</span>
+                    <span className="font-bold">{t.add}</span>
                   </button>
                 </div>
                 
                 <div className="flex items-center gap-3 px-2">
                   <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-xl border border-slate-100">
                     <Bell className="w-4 h-4 text-slate-400" />
-                    <span className="text-xs font-bold text-slate-500">{lang === 'ar' ? 'تذكير:' : 'Rappel:'}</span>
+                    <span className="text-xs font-bold text-slate-500">{t.reminderLabel}</span>
                     <input 
                       type="time" 
                       value={reminderTime}
@@ -1001,7 +1193,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                       onClick={() => setReminderTime('')}
                       className="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-widest"
                     >
-                      {lang === 'ar' ? 'إلغاء' : 'Annuler'}
+                      {t.cancel}
                     </button>
                   )}
                 </div>
@@ -1017,10 +1209,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                         onChange={(e) => setTaskPriorityFilter(e.target.value as any)}
                         className="bg-transparent border-none outline-none text-[10px] font-black uppercase tracking-widest text-slate-500 cursor-pointer"
                       >
-                        <option value="all">{lang === 'ar' ? 'كل الأولويات' : 'Priorités'}</option>
-                        <option value="high">{lang === 'ar' ? 'عالية' : 'Haute'}</option>
-                        <option value="medium">{lang === 'ar' ? 'متوسطة' : 'Moyenne'}</option>
-                        <option value="low">{lang === 'ar' ? 'منخفضة' : 'Basse'}</option>
+                        <option value="all">{t.allPriorities}</option>
+                        <option value="high">{t.priorityHigh}</option>
+                        <option value="medium">{t.priorityMedium}</option>
+                        <option value="low">{t.priorityLow}</option>
                       </select>
                     </div>
 
@@ -1031,8 +1223,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                         onChange={(e) => setTaskSortBy(e.target.value as any)}
                         className="bg-transparent border-none outline-none text-[10px] font-black uppercase tracking-widest text-slate-500 cursor-pointer"
                       >
-                        <option value="date">{lang === 'ar' ? 'تاريخ الاستحقاق' : 'Date d\'échéance'}</option>
-                        <option value="priority">{lang === 'ar' ? 'الأولوية' : 'Priorité'}</option>
+                        <option value="date">{t.dueDateLabel}</option>
+                        <option value="priority">{t.prioritySort}</option>
                       </select>
                     </div>
 
@@ -1042,7 +1234,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                     >
                       {taskSortOrder === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary-500 transition-colors" /> : <ArrowDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary-500 transition-colors" />}
                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                        {taskSortOrder === 'asc' ? (lang === 'ar' ? 'تصاعدي' : 'Croissant') : (lang === 'ar' ? 'تنازلي' : 'Décroissant')}
+                        {taskSortOrder === 'asc' ? t.sortAscending : t.sortDescending}
                       </span>
                     </button>
                   </div>
@@ -1051,7 +1243,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                 <AnimatePresence initial={false}>
                   {filteredTodayTasks.length > 0 ? Object.entries(
                     filteredTodayTasks.reduce((acc, task) => {
-                      const subj = task.subject || (lang === 'ar' ? 'عام' : 'Général');
+                      const subj = task.subject || t.generalSubject;
                       if (!acc[subj]) acc[subj] = [];
                       acc[subj].push(task);
                       return acc;
@@ -1068,7 +1260,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                         <div className="flex items-center gap-2 px-1">
                           <div className={cn("w-2 h-4 rounded-full", colors.marker)} />
                           <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                            {subject} • {subjectTasks.length} {lang === 'ar' ? 'مهام' : 'tâches'}
+                            {subject} • {subjectTasks.length} {t.tasks}
                           </h4>
                         </div>
                         <div className="space-y-3">
@@ -1139,14 +1331,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                                     task.priority === 'medium' ? "bg-amber-100 text-amber-600" :
                                     "bg-emerald-100 text-emerald-600"
                                   )}>
-                                    {task.priority === 'high' ? (lang === 'ar' ? 'عالية' : 'Haute') :
-                                     task.priority === 'medium' ? (lang === 'ar' ? 'متوسطة' : 'Moyenne') :
-                                     (lang === 'ar' ? 'منخفضة' : 'Basse')}
+                                    {task.priority === 'high' ? t.priorityHigh :
+                                     task.priority === 'medium' ? t.priorityMedium :
+                                     t.priorityLow}
                                   </span>
                                 </div>
                                 <div className="flex items-center justify-between mt-3 mb-1">
                                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                      {lang === 'ar' ? 'التقدم' : 'Progression'}
+                                      {t.progressLabel}
                                     </span>
                                     <span className={cn(
                                       "text-xs font-black tabular-nums",
@@ -1178,7 +1370,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                                     {/* Visual Cue for interaction */}
                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/slider:opacity-100 transition-opacity pointer-events-none">
                                       <div className="text-[8px] font-black uppercase text-white drop-shadow-sm">
-                                        {lang === 'ar' ? 'اسحب للتعديل' : 'Glisser pour ajuster'}
+                                        {t.dragToAdjust}
                                       </div>
                                     </div>
                                   </div>
@@ -1222,7 +1414,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                         <CheckCircle2 className="w-8 h-8 text-slate-200" />
                       </div>
                       <p className="text-slate-400 font-bold tracking-tight">
-                        {lang === 'ar' ? "لا توجد مهام لليوم. استمتع بوقتك!" : "Aucune tâche pour aujourd'hui. Profite bien !"}
+                        {t.noTasksToday}
                       </p>
                     </div>
                   )}
@@ -1235,14 +1427,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
           <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h3 className="text-2xl font-black text-slate-900">{lang === 'ar' ? "التقدم" : "Progression"}</h3>
-                <p className="text-slate-400 font-medium text-sm mt-1">Vue d'ensemble par matière</p>
+                <h3 className="text-2xl font-black text-slate-900">{t.progressLabel}</h3>
+                <p className="text-slate-400 font-medium text-sm mt-1">{t.overviewBySubject}</p>
               </div>
               <div className="flex items-center gap-3">
                 <button 
                   onClick={resetProgress}
                   className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                  title={lang === 'ar' ? "إعادة ضبط" : "Réinitialiser"}
+                  title={t.resetTitle}
                 >
                   <RotateCcw className="w-5 h-5" />
                 </button>
@@ -1260,7 +1452,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2 flex items-center gap-2 mb-2">
                 <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  {lang === 'ar' ? "حالة المواد" : "Statut détaillé par matière"}
+                  {t.subjectStatus}
                 </h4>
               </div>
               {chartData.map((s, idx) => {
@@ -1285,7 +1477,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                           <p className="font-black text-slate-900 leading-tight">{s.fullName}</p>
                           {s.isFinished && (
                             <span className="bg-emerald-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter">
-                              {lang === 'ar' ? "مكتمل" : "Terminé"}
+                              {t.completedBadge}
                             </span>
                           )}
                         </div>
@@ -1293,14 +1485,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                           <div className="flex items-center gap-1">
                             <CheckCircle2 className={cn("w-3 h-3", s.completedTasks === s.totalTasks && s.totalTasks > 0 ? "text-emerald-500" : "text-slate-300")} />
                             <span className="text-[10px] font-bold text-slate-500">
-                              {s.completedTasks}/{s.totalTasks} {lang === 'ar' ? "مهام" : "tâches"}
+                              {s.completedTasks}/{s.totalTasks} {t.tasks}
                             </span>
                           </div>
                           {s.hasGoals && (
                             <div className="flex items-center gap-1">
                               <Target className={cn("w-3 h-3", s.goalsCompleted ? "text-primary-500" : "text-slate-300")} />
                               <span className="text-[10px] font-bold text-slate-500">
-                                {lang === 'ar' ? "أهداف" : "Objectifs"}
+                                {t.goals}
                               </span>
                             </div>
                           )}
@@ -1332,12 +1524,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                     <Target className="w-5 h-5" />
                   </div>
                   <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    {lang === 'ar' ? "أهداف الدراسة" : "Objectifs de révision"}
+                    {t.studyGoalsHeader}
                   </h4>
                 </div>
                 {studyGoals.length > 0 && (
                   <span className="text-[10px] font-bold text-slate-400">
-                    {studyGoals.filter(g => g.currentValue >= g.targetValue).length}/{studyGoals.length} {lang === 'ar' ? "مكتمل" : "atteints"}
+                    {studyGoals.filter(g => g.currentValue >= g.targetValue).length}/{studyGoals.length} {t.reachedGoals}
                   </span>
                 )}
               </div>
@@ -1380,7 +1572,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                                  {goal.title}
                                </p>
                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                 {goal.subject || (lang === 'ar' ? 'عام' : 'Général')}
+                                 {goal.subject || t.generalSubject}
                                </span>
                              </div>
                           </div>
@@ -1435,7 +1627,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                      <Target className="w-6 h-6 text-slate-200 hidden fallback-icon" />
                    </div>
                   <p className="text-slate-400 font-bold italic text-sm">
-                    {lang === 'ar' ? "لم يتم تحديد أهداف مراجعة بعد." : "Aucun objectif de révision fixé pour le moment."}
+                    {t.noGoals}
                   </p>
                 </div>
               )}
@@ -1445,7 +1637,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
           <div className="bg-slate-900 p-8 rounded-[40px] text-white shadow-2xl shadow-slate-200">
             <h3 className="text-xl font-black mb-6 flex items-center gap-3">
               <Zap className="w-6 h-6 text-yellow-400" />
-              {lang === 'ar' ? "وصول سريع" : "Accès rapide"}
+              {t.quickAccess}
             </h3>
             <div className="grid grid-cols-1 gap-3">
               <button 
@@ -1456,7 +1648,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                   <div className="bg-primary-500 p-3 rounded-2xl">
                     <Sparkles className="w-5 h-5" />
                   </div>
-                  <span className="font-bold">{lang === 'ar' ? "تلخيص درس" : "Résumer cours"}</span>
+                  <span className="font-bold">{t.summarizeLesson}</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-slate-500 group-hover:translate-x-1 transition-transform" />
               </button>
@@ -1469,7 +1661,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                   <div className="bg-emerald-500 p-3 rounded-2xl">
                     <Target className="w-5 h-5" />
                   </div>
-                  <span className="font-bold">{lang === 'ar' ? "إنشاء كويز" : "Créer quiz"}</span>
+                  <span className="font-bold">{t.createQuiz}</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-slate-500 group-hover:translate-x-1 transition-transform" />
               </button>
@@ -1482,7 +1674,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                   <div className="bg-amber-500 p-3 rounded-2xl">
                     <Clock className="w-5 h-5" />
                   </div>
-                  <span className="font-bold">{lang === 'ar' ? "رؤية الجدول" : "Voir planning"}</span>
+                  <span className="font-bold">{t.viewSchedule}</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-slate-500 group-hover:translate-x-1 transition-transform" />
               </button>
@@ -1493,7 +1685,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
           <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100">
             <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-3">
               <Clock className="w-6 h-6 text-primary-600" />
-              {lang === 'ar' ? "تخطيط الغد" : "Planning demain"}
+              {t.planTomorrow}
             </h3>
             <div className="space-y-4">
               {tomorrowTasks.length > 0 ? tomorrowTasks.map(task => (
@@ -1515,7 +1707,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                 </div>
               )) : (
                 <div className="text-center py-8">
-                  <p className="text-slate-400 text-sm font-medium italic">Rien de prévu pour demain encore.</p>
+                  <p className="text-slate-400 text-sm font-medium italic">{t.nothingPlannedTomorrow}</p>
                 </div>
               )}
             </div>
@@ -1528,9 +1720,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
           <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-xl font-black text-slate-900">{lang === 'ar' ? "إحصائيات الوقت" : "Statistiques de Temps"}</h3>
+                <h3 className="text-xl font-black text-slate-900">{t.timeStats}</h3>
                 <p className="text-slate-500 font-medium text-xs mt-1">
-                  {lang === 'ar' ? "معدل الساعات والدقائق" : "Taux d'heures et minutes d'étude hebdomadaire"}
+                  {t.weeklyStudyRate}
                 </p>
               </div>
               <div className="bg-primary-50 px-3 py-1.5 rounded-xl border border-primary-100 flex items-center gap-2">
@@ -1565,7 +1757,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                   />
                   <Tooltip 
                     contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
-                    formatter={(value: any, name: any, props: any) => [props.payload.displayTime, 'Étude']}
+                    formatter={(value: any, name: any, props: any) => [props.payload.displayTime, t.study]}
                   />
                   <Area 
                     type="monotone" 
@@ -1615,23 +1807,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
                 <Trash2 className="w-10 h-10 text-red-600" />
               </div>
               <h3 className="text-2xl font-black text-slate-900 mb-2">
-                {lang === 'ar' ? "حذف المهمة؟" : "Supprimer ?"}
+                {t.deleteTitle}
               </h3>
               <p className="text-slate-500 font-medium mb-8 leading-relaxed">
-                {lang === 'ar' ? `هل أنت متأكد أنك تريد حذف "${taskToDelete.title}"؟` : `Es-tu sûr de vouloir supprimer "${taskToDelete.title}" ?`}
+                {t.deleteConfirmMsg(taskToDelete.title)}
               </p>
               <div className="flex gap-4">
                 <button
                   onClick={() => setTaskToDelete(null)}
                   className="flex-1 py-4 px-6 rounded-2xl font-bold text-slate-500 hover:bg-slate-100 transition-all"
                 >
-                  {lang === 'ar' ? "إلغاء" : "Annuler"}
+                  {t.cancel}
                 </button>
                 <button
                   onClick={confirmDelete}
                   className="flex-1 py-4 px-6 rounded-2xl font-bold bg-red-600 text-white hover:bg-red-700 transition-all shadow-lg shadow-red-100"
                 >
-                  {lang === 'ar' ? "حذف" : "Supprimer"}
+                  {t.delete}
                 </button>
               </div>
             </motion.div>
@@ -1643,6 +1835,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userProfile, onTabChange, 
 };
 
 const AnalyticsSummary: React.FC<{ neglected: any[], weak: string[], lang: Language, onViewAnalytics: () => void }> = ({ neglected, weak, lang, onViewAnalytics }) => {
+  const t = tDict[lang] || tDict.fr;
   return (
     <div className="bg-white p-6 md:p-8 rounded-3xl md:rounded-[40px] shadow-sm border border-slate-100 flex flex-col h-full">
       <div className="flex items-center justify-between mb-6 md:mb-8">
@@ -1650,13 +1843,13 @@ const AnalyticsSummary: React.FC<{ neglected: any[], weak: string[], lang: Langu
           <div className="bg-red-50 p-2 rounded-xl">
             <AlertTriangle className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
           </div>
-          {lang === 'ar' ? "نقاط اليقظة" : "Focus"}
+          {t.focusTitle}
         </h3>
         <button 
           onClick={onViewAnalytics}
           className="text-[9px] md:text-[10px] font-black text-primary-600 bg-primary-50 px-2.5 md:px-3 py-1.5 rounded-lg md:rounded-xl uppercase tracking-widest hover:bg-primary-100 transition-all shadow-sm"
         >
-          {lang === 'ar' ? "التفاصيل" : "Détails"}
+          {t.details}
         </button>
       </div>
 
@@ -1664,7 +1857,7 @@ const AnalyticsSummary: React.FC<{ neglected: any[], weak: string[], lang: Langu
         {neglected.length > 0 && (
           <div>
             <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 md:mb-3 px-1">
-              {lang === 'ar' ? "مواد مهملة" : "Matières Négligées"}
+              {t.neglectedSubjects}
             </p>
             <div className="flex flex-wrap gap-1.5 md:gap-2">
               {neglected.map(s => (
@@ -1680,7 +1873,7 @@ const AnalyticsSummary: React.FC<{ neglected: any[], weak: string[], lang: Langu
         {weak.length > 0 && (
           <div>
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">
-              {lang === 'ar' ? "مواد ضعيفة" : "Matières Faibles"}
+              {t.weakSubjects}
             </p>
             <div className="flex flex-wrap gap-2">
               {weak.map(s => (
@@ -1698,9 +1891,9 @@ const AnalyticsSummary: React.FC<{ neglected: any[], weak: string[], lang: Langu
               <CheckCircle2 className="w-8 h-8 text-emerald-500" />
             </div>
             <p className="text-sm text-slate-500 font-bold mb-1">
-              {lang === 'ar' ? "كل شيء تحت السيطرة !" : "Tout est sous contrôle !"} ✨
+              {t.allUnderControl} ✨
             </p>
-            <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Performance optimisée</p>
+            <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">{t.performanceOptimized}</p>
           </div>
         )}
       </div>
@@ -1722,7 +1915,7 @@ const PomodoroModule: React.FC<{
   const [selectedSubject, setSelectedSubject] = useState('');
   
   const lang: Language = userProfile.language || 'fr';
-  const t = translations[lang];
+  const t = tDict[lang] || tDict.fr;
 
   useEffect(() => {
     let interval: any = null;
@@ -1810,8 +2003,8 @@ const PomodoroModule: React.FC<{
     <div className="flex flex-col items-center">
        <div className="flex gap-1.5 mb-8 bg-slate-50 p-1 rounded-2xl w-full">
           {[
-            { id: 'work', label: lang === 'ar' ? 'عمل' : 'Focus', icon: Timer },
-            { id: 'short', label: lang === 'ar' ? 'راحة' : 'Pause', icon: Coffee }
+            { id: 'work', label: t.focus, icon: Timer },
+            { id: 'short', label: t.pause, icon: Coffee }
           ].map(m => (
             <button
               key={m.id}
@@ -1830,14 +2023,14 @@ const PomodoroModule: React.FC<{
        {mode === 'work' && subjects.length > 0 && !isActive && (
          <div className="w-full space-y-2 mb-6">
            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2 block">
-             {lang === 'ar' ? 'اختر مادة للتركيز' : 'Matière à réviser'}
+             {t.chooseSubject}
            </label>
            <select
              value={selectedSubject}
              onChange={(e) => setSelectedSubject(e.target.value)}
              className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-primary-100 transition-all appearance-none cursor-pointer"
            >
-             <option value="">{lang === 'ar' ? 'عام' : 'Général'}</option>
+             <option value="">{t.generalSubject}</option>
              {subjects.map(s => (
                <option key={s} value={s}>{s}</option>
              ))}
@@ -1862,10 +2055,10 @@ const PomodoroModule: React.FC<{
            )}
          >
            {isActive ? <Square className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current text-white" />}
-           {isActive 
-             ? (lang === 'ar' ? 'إيقاف الجلسة' : 'Arrêter session') 
-             : (lang === 'ar' ? 'ابدأ الجلسة' : 'Démarrer session')
-           }
+            {isActive 
+              ? t.stopSession
+              : t.startSession
+            }
          </button>
          <button
            onClick={() => {
@@ -1883,6 +2076,7 @@ const PomodoroModule: React.FC<{
 };
 
 const ActivityMemory: React.FC<{ userProfile: UserProfile, lang: Language }> = ({ userProfile, lang }) => {
+  const t = tDict[lang] || tDict.fr;
   const [logs, setLogs] = useState<any[]>([]);
 
   useEffect(() => {
@@ -1902,7 +2096,7 @@ const ActivityMemory: React.FC<{ userProfile: UserProfile, lang: Language }> = (
   }, [userProfile.uid]);
 
   const today = new Date();
-  const dateStr = today.toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'fr-FR', { 
+  const dateStr = today.toLocaleDateString(locale(lang), { 
     weekday: 'long', 
     day: 'numeric', 
     month: 'long' 
@@ -1913,7 +2107,7 @@ const ActivityMemory: React.FC<{ userProfile: UserProfile, lang: Language }> = (
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-black text-slate-900 flex items-center gap-3">
           <History className="w-6 h-6 text-emerald-600" />
-          {lang === 'ar' ? "ذاكرة اليوم" : "Mémoire du jour"}
+          {t.memoryOfToday}
         </h3>
         <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full uppercase tracking-widest">
           {dateStr}
@@ -1933,7 +2127,7 @@ const ActivityMemory: React.FC<{ userProfile: UserProfile, lang: Language }> = (
             <div>
               <p className="text-sm font-bold text-slate-800 leading-tight">
                 {log.type === 'task_completed' 
-                  ? (lang === 'ar' ? `أكملت: ${log.title}` : `Terminé : ${log.title}`)
+                  ? t.completedLog(log.title)
                   : log.title
                 }
               </p>
@@ -1941,14 +2135,14 @@ const ActivityMemory: React.FC<{ userProfile: UserProfile, lang: Language }> = (
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{log.subject}</span>
                 <span className="text-[10px] text-slate-300">•</span>
                 <span className="text-[10px] text-slate-400">
-                  {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {new Date(log.timestamp).toLocaleTimeString(locale(lang), { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
             </div>
           </div>
         )) : (
           <div className="text-center py-8">
-            <p className="text-slate-400 text-sm font-medium italic">Aucun souvenir pour le moment.</p>
+            <p className="text-slate-400 text-sm font-medium italic">{t.noMemories}</p>
           </div>
         )}
       </div>

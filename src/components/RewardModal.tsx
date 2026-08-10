@@ -15,6 +15,14 @@ interface RewardModalProps {
 export const RewardModal: React.FC<RewardModalProps> = ({ milestone, xpEarned, isOpen, onClose, lang }) => {
   if (!isOpen) return null;
 
+  const tDict = {
+    fr: { newTitle: 'Nouveau Titre Débloqué !', congrats: 'Félicitations !', xpMsg: "Tu as gagné des points d'expérience pour tes efforts !", continueAdventure: "Continuer l'aventure" },
+    en: { newTitle: 'New Title Unlocked!', congrats: 'Congratulations!', xpMsg: 'You earned extra experience points for your efforts!', continueAdventure: "Continue the adventure" },
+    es: { newTitle: '¡Nuevo Título Desbloqueado!', congrats: '¡Felicitaciones!', xpMsg: '¡Ganaste puntos de experiencia extra por tus esfuerzos!', continueAdventure: 'Continuar la aventura' },
+    ar: { newTitle: 'لقب جديد!', congrats: 'أحسنت!', xpMsg: 'لقد ربحت نقاط خبرة إضافية لجهودك!', continueAdventure: 'متابعة' }
+  };
+  const t = tDict[lang] || tDict.fr;
+
   return (
     <AnimatePresence>
       <motion.div
@@ -47,7 +55,7 @@ export const RewardModal: React.FC<RewardModalProps> = ({ milestone, xpEarned, i
             {milestone ? (
               <>
                 <h2 className="text-3xl font-black text-slate-900 mb-2 leading-tight">
-                  {lang === 'ar' ? 'لقب جديد!' : 'Nouveau Titre Débloqué !'}
+                  {t.newTitle}
                 </h2>
                 <div className="bg-primary-50 py-3 px-6 rounded-2xl inline-block mb-6 border border-primary-100">
                   <span className="text-xl font-black text-primary-600 uppercase tracking-tight">
@@ -61,7 +69,7 @@ export const RewardModal: React.FC<RewardModalProps> = ({ milestone, xpEarned, i
             ) : (
               <>
                 <h2 className="text-3xl font-black text-slate-900 mb-2 leading-tight">
-                  {lang === 'ar' ? 'أحسنت!' : 'Félicitations !'}
+                  {t.congrats}
                 </h2>
                 <div className="flex items-center justify-center gap-2 mb-6">
                    <div className="bg-yellow-50 text-yellow-600 px-4 py-2 rounded-full font-black flex items-center gap-2 border border-yellow-100">
@@ -70,7 +78,7 @@ export const RewardModal: React.FC<RewardModalProps> = ({ milestone, xpEarned, i
                    </div>
                 </div>
                 <p className="text-slate-600 font-medium mb-8">
-                  {lang === 'ar' ? 'لقد ربحت نقاط خبرة إضافية لجهودك!' : 'Tu as gagné des points d\'expérience pour tes efforts !'}
+                  {t.xpMsg}
                 </p>
               </>
             )}
@@ -92,7 +100,7 @@ export const RewardModal: React.FC<RewardModalProps> = ({ milestone, xpEarned, i
               onClick={onClose}
               className="mt-10 w-full py-4 bg-primary-600 text-white rounded-2xl font-black shadow-xl shadow-primary-100 hover:bg-primary-700 transition-all hover:scale-[1.02] active:scale-95"
             >
-              {lang === 'ar' ? 'متابعة' : 'Continuer l\'aventure'}
+              {t.continueAdventure}
             </button>
           </div>
         </motion.div>

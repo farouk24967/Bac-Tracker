@@ -12,13 +12,23 @@ export const MemoryBadge: React.FC<MemoryBadgeProps> = ({ lang }) => {
   const [time, setTime] = useState(new Date());
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const locale = lang === 'ar' ? 'ar-EG' : lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'fr-FR';
+
+  const tDict = {
+    fr: { activeMemory: "Mémoire Active", dateTime: "Date & Heure", location: "Localisation", country: "Algérie (DzBac Cloud)" },
+    en: { activeMemory: "Active Memory", dateTime: "Date & Time", location: "Location", country: "Algeria (DzBac Cloud)" },
+    es: { activeMemory: "Memoria Activa", dateTime: "Fecha y Hora", location: "Ubicación", country: "Argelia (DzBac Cloud)" },
+    ar: { activeMemory: "الذاكرة النشطة", dateTime: "التاريخ والوقت", location: "الموقع", country: "الجزائر (DzBac Cloud)" }
+  };
+  const t = tDict[lang] || tDict.fr;
+
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString(lang === 'ar' ? 'ar-DZ' : 'fr-FR', {
+    return date.toLocaleTimeString(locale, {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit'
@@ -26,7 +36,7 @@ export const MemoryBadge: React.FC<MemoryBadgeProps> = ({ lang }) => {
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'fr-FR', {
+    return date.toLocaleDateString(locale, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -55,7 +65,7 @@ export const MemoryBadge: React.FC<MemoryBadgeProps> = ({ lang }) => {
         </div>
         <div className="text-left hidden md:block">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
-            {lang === 'ar' ? "الذاكرة النشطة" : "Mémoire Active"}
+            {t.activeMemory}
           </p>
           <p className="text-xs font-bold leading-none">{formatTime(time)}</p>
         </div>
@@ -80,7 +90,7 @@ export const MemoryBadge: React.FC<MemoryBadgeProps> = ({ lang }) => {
                   <Clock className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Date & Heure</p>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t.dateTime}</p>
                   <p className="text-xs font-bold">{formatDate(time)}</p>
                 </div>
               </div>
@@ -90,8 +100,8 @@ export const MemoryBadge: React.FC<MemoryBadgeProps> = ({ lang }) => {
                   <MapPin className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Localisation</p>
-                  <p className="text-xs font-bold">{lang === 'ar' ? "الجزائر (DzBac Cloud)" : "Algérie (DzBac Cloud)"}</p>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t.location}</p>
+                  <p className="text-xs font-bold">{t.country}</p>
                 </div>
               </div>
 

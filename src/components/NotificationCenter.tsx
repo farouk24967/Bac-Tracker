@@ -21,7 +21,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Notification, Language } from '../types';
-import { translations } from '../translations';
+import { safeT } from '../translations';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
@@ -32,7 +32,7 @@ interface NotificationCenterProps {
 }
 
 export const NotificationCenter: React.FC<NotificationCenterProps> = ({ uid, lang }) => {
-  const t = translations[lang];
+  const t = safeT(lang);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -129,10 +129,10 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ uid, lan
             <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
               <div>
                 <h3 className="font-black text-slate-900 text-lg">
-                  {lang === 'ar' ? 'التنبيهات' : 'Notifications'}
+                  {t.notif_title}
                 </h3>
                 <p className="text-xs text-slate-500 font-medium">
-                  {unreadCount} {lang === 'ar' ? 'غير مقروءة' : 'non lues'}
+                  {unreadCount} {t.notif_unread}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -141,7 +141,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ uid, lan
                     onClick={markAllAsRead}
                     className="text-xs font-bold text-primary-600 hover:bg-primary-50 px-3 py-1.5 rounded-lg transition-colors"
                   >
-                    {lang === 'ar' ? 'قراءة الكل' : 'Tout lire'}
+                    {t.notif_read_all}
                   </button>
                 )}
                 <button 
@@ -196,7 +196,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ uid, lan
                               onClick={() => markAsRead(n.id)}
                               className="text-[10px] font-extrabold text-primary-600 uppercase tracking-widest hover:underline"
                             >
-                              {lang === 'ar' ? 'تحديد كمقروء' : 'Marquer comme lu'}
+                              {t.notif_mark_read}
                             </button>
                           )}
                         </div>
@@ -212,10 +212,10 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ uid, lan
                       <Bell className="w-8 h-8 text-slate-300" />
                     </div>
                     <p className="text-slate-900 font-bold">
-                      {lang === 'ar' ? 'كل شيء هادئ هنا' : 'Tout est calme ici'}
+                      {t.notif_empty_title}
                     </p>
                     <p className="text-sm text-slate-400 mt-1">
-                      {lang === 'ar' ? 'ليس لديك أي تنبيهات حالياً.' : "Tu n'as aucune notification pour le moment."}
+                      {t.notif_empty_desc}
                     </p>
                   </div>
                 )}

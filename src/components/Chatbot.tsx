@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { AI_TOOLS } from '../constants';
 
 import { UserProfile, Language } from '../types';
-import { translations } from '../translations';
+import { safeT } from '../translations';
 
 interface ChatbotProps {
   userProfile: UserProfile;
@@ -13,7 +13,7 @@ interface ChatbotProps {
 
 export const Chatbot: React.FC<ChatbotProps> = ({ userProfile }) => {
   const lang: Language = userProfile.language || 'fr';
-  const t = translations[lang];
+  const t = safeT(lang);
   const [messages, setMessages] = useState<{ role: 'user' | 'model', parts: { text: string }[] }[]>([
     { 
       role: 'model', 
@@ -56,7 +56,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ userProfile }) => {
           <div>
             <h2 className="font-bold text-lg">{t.chatbot}</h2>
             <p className="text-xs text-primary-100">
-              {lang === 'ar' ? "متصل لمساعدتك" : "En ligne pour t'aider"}
+              {t.online_help}
             </p>
           </div>
         </div>

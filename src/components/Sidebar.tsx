@@ -16,13 +16,14 @@ import {
   Calculator,
   Settings as SettingsIcon,
   BarChart3,
-  ShieldCheck
+  ShieldCheck,
+  History
 } from 'lucide-react';
 import { logout, db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { cn } from '../lib/utils';
 import { Language } from '../types';
-import { translations } from '../translations';
+import { translations, safeT } from '../translations';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface SidebarProps {
@@ -32,37 +33,44 @@ interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
   onOpen?: () => void;
+  onChangeLanguage?: (lang: Language) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userProfile, isOpen, onClose, onOpen }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userProfile, isOpen, onClose, onOpen, onChangeLanguage }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const lang: Language = userProfile.language || 'fr';
-  const t = translations[lang];
+  const t = safeT(lang);
 
   const menuItems = [
     { id: 'dashboard', label: t.dashboard, icon: LayoutDashboard },
-    { id: 'calendar', label: lang === 'ar' ? 'التقويم' : 'Calendrier', icon: Calendar },
+    { id: 'calendar', label: t.tab_calendar, icon: Calendar },
     { id: 'chatbot', label: t.chatbot, icon: MessageSquare },
     { id: 'resources', label: t.resources, icon: Library },
-    { id: 'average', label: lang === 'ar' ? 'حساب المعدل' : 'Moyenne', icon: Calculator },
+    { id: 'average', label: t.tab_average, icon: Calculator },
     { id: 'gamification', label: t.gamification, icon: Trophy },
-    { id: 'analytics', label: lang === 'ar' ? 'التحليلات' : 'Analytics', icon: BarChart3 },
-    { id: 'settings', label: lang === 'ar' ? 'الإعدادات' : 'Paramètres', icon: SettingsIcon },
+    { id: 'analytics', label: t.tab_analytics, icon: BarChart3 },
+    { id: 'history', label: t.tab_history, icon: History },
+    { id: 'settings', label: t.tab_settings, icon: SettingsIcon },
     ...(userProfile.email === 'bouayedfarouk63@gmail.com' ? [{ id: 'admin', label: 'Admin', icon: ShieldCheck }] : []),
   ];
 
   const mobileBottomItems = [
-    { id: 'dashboard', label: lang === 'ar' ? 'البداية' : 'Home', icon: LayoutDashboard },
-    { id: 'calendar', label: lang === 'ar' ? 'التقويم' : 'Planning', icon: Calendar },
+    { id: 'dashboard', label: t.home, icon: LayoutDashboard },
+    { id: 'calendar', label: t.tab_calendar, icon: Calendar },
     { id: 'chatbot', label: 'IA', icon: MessageSquare },
-    { id: 'resources', label: 'Docs', icon: Library },
+    { id: 'resources', label: t.docs, icon: Library },
   ];
 
-  const changeLanguage = async (newLang: Language) => {
-    await updateDoc(doc(db, 'users', userProfile.uid), {
-      language: newLang
-    });
+  const changeLanguage = (newLang: Language) => {
+    if (onChangeLanguage) {
+      onChangeLanguage(newLang);
+    } else {
+      // Fallback : écriture directe si le prop n'est pas fourni
+      updateDoc(doc(db, 'users', userProfile.uid), { language: newLang }).catch((err) => {
+        console.error('[Sidebar] Erreur changement de langue :', err);
+      });
+    }
   };
 
   const handleImageClick = () => {
@@ -195,7 +203,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userP
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-slate-400 px-2">
                     <Globe className="w-4 h-4" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Langue</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest">{t.language}</span>
                   </div>
                   <div className="flex gap-2">
                     {(['fr', 'en', 'ar', 'es'] as Language[]).map((l) => (
@@ -301,7 +309,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userP
           <div className="flex items-center justify-between px-2">
             <div className="flex items-center gap-2 text-slate-400">
               <Globe className="w-4 h-4" />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Langue</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest">{t.language}</span>
             </div>
             <div className="flex gap-1">
               {(['fr', 'en', 'ar', 'es'] as Language[]).map((l) => (
@@ -403,7 +411,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userP
               <Menu className="w-2 h-2 text-slate-600" />
             </div>
           </div>
-          <span className="text-[9px] font-black uppercase tracking-tighter truncate max-w-[50px]">Menu</span>
+          <span className="text-[9px] font-black uppercase tracking-tighter truncate max-w-[50px]">{t.menu}</span>
         </button>
       </div>
     </>

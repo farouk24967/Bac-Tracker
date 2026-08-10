@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // ===============================================================
-    // Global Deny
+    // Global Deny (tout est refusé par défaut)
     // ===============================================================
     match /{document=**} {
       allow read, write: if false;
@@ -31,27 +31,56 @@ service cloud.firestore {
       return resource.data;
     }
 
+    // Seul l'administrateur (email vérifié) peut écrire la config officielle.
     function isAdmin() {
       return isSignedIn() && (
-        request.auth.token.email == "bouayedfarouk63@gmail.com" && 
+        request.auth.token.email == "bouayedfarouk63@gmail.com" &&
         request.auth.token.email_verified == true
       );
     }
 
     // ===============================================================
-    // Entity Validations
+    // Validations par entité
     // ===============================================================
-    
+
+    function isValidTimestamp(value) {
+      return value is timestamp;
+    }
+
     function isValidUser(data) {
       return data.get('uid', '') == request.auth.uid
         && data.get('displayName', '') is string && data.displayName.size() <= 200
         && data.get('email', '') is string
         && (data.get('photoURL', null) == null || (data.photoURL is string && data.photoURL.size() <= 1000000))
-        && (data.get('stream', null) == null || data.stream is string)
+        && (data.get('stream', null) == null || (data.stream is string && data.stream.size() <= 100))
         && data.get('points', 0) is number
         && data.get('badges', []) is list
         && data.get('onboardingCompleted', false) is bool
-        && data.get('currentStreak', 0) is number;
+        && data.get('currentStreak', 0) is number
+        && (data.get('bacSessionId', null) == null || (data.bacSessionId is string && data.bacSessionId.size() <= 32));
+    }
+
+    // Les dates peuvent être stockées comme chaîne ISO ou timestamp Firestore.
+    function isValidDateValue(value) {
+      return value == null || value is timestamp || (value is string && value.size() <= 40);
+    }
+
+    function isValidBacSession(data) {
+      return data.get('year', 0) is int && data.year >= 2020 && data.year <= 2100
+        && isValidDateValue(data.get('examStartDate', null))
+        && isValidDateValue(data.get('examEndDate', null))
+        && isValidDateValue(data.get('resultsDate', null))
+        && data.get('status', '') in ['upcoming', 'in_progress', 'completed', 'canceled']
+        && data.get('sourceUrl', '') is string && data.sourceUrl.size() <= 500
+        && data.get('sourceVerified', false) is bool;
+    }
+
+    function isValidBacSubjectConfig(data) {
+      return data.get('year', 0) is int && data.year >= 2020 && data.year <= 2100
+        && data.get('stream', '') is string && data.stream.size() <= 100
+        && data.get('subjects', {}) is map
+        && data.get('coefficients', {}) is map
+        && data.coefficients.size() <= 30;
     }
 
     // ===============================================================
@@ -62,8 +91,10 @@ service cloud.firestore {
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId) && isValidUser(incoming());
       allow update: if isAdmin() || (isOwner(userId) && isValidUser(incoming()) && (
-        // Prevent role escalation if role existed
-        (!('role' in existing()) || incoming().get('role', '') == existing().role)
+        // Interdit toute escalade de rôle : le rôle ne peut être modifié
+        // que par l'admin, et sa valeur doit rester identique si elle existe.
+        (!('role' in existing()) && !('role' in incoming()))
+        || (('role' in existing()) && incoming().get('role', '') == existing().role)
       ));
     }
 
@@ -76,41 +107,87 @@ service cloud.firestore {
 
     match /subjectProgress/{id} {
       allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
-      allow create: if isSignedIn() && incoming().uid == request.auth.uid;
+      allow create: if isSignedIn() && incoming().uid == request.auth.uid && isValidId(id);
       allow update: if isSignedIn() && existing().uid == request.auth.uid && incoming().uid == request.auth.uid;
+      allow delete: if isSignedIn() && existing().uid == request.auth.uid;
     }
 
     match /notifications/{id} {
       allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
-      allow create: if isSignedIn() && incoming().uid == request.auth.uid;
+      allow create: if isSignedIn() && incoming().uid == request.auth.uid && isValidId(id);
       allow update: if isSignedIn() && existing().uid == request.auth.uid && incoming().uid == request.auth.uid;
       allow delete: if isSignedIn() && existing().uid == request.auth.uid;
     }
 
     match /studyGoals/{id} {
       allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
-      allow create: if isSignedIn() && incoming().uid == request.auth.uid;
+      allow create: if isSignedIn() && incoming().uid == request.auth.uid && isValidId(id);
       allow update: if isSignedIn() && existing().uid == request.auth.uid && incoming().uid == request.auth.uid;
       allow delete: if isSignedIn() && existing().uid == request.auth.uid;
     }
 
     match /scheduledSessions/{id} {
       allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
-      allow create: if isSignedIn() && incoming().uid == request.auth.uid;
+      allow create: if isSignedIn() && incoming().uid == request.auth.uid && isValidId(id);
       allow update: if isSignedIn() && existing().uid == request.auth.uid && incoming().uid == request.auth.uid;
       allow delete: if isSignedIn() && existing().uid == request.auth.uid;
     }
 
     match /studySessions/{id} {
       allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
-      allow create: if isSignedIn() && incoming().uid == request.auth.uid;
+      allow create: if isSignedIn() && incoming().uid == request.auth.uid && isValidId(id);
       allow update: if isSignedIn() && existing().uid == request.auth.uid && incoming().uid == request.auth.uid;
       allow delete: if isSignedIn() && existing().uid == request.auth.uid;
     }
 
     match /activityLog/{id} {
       allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
-      allow create: if isSignedIn() && incoming().uid == request.auth.uid;
+      allow create: if isSignedIn() && incoming().uid == request.auth.uid && isValidId(id);
+    }
+
+    // ===============================================================
+    // Sessions BAC (config officielle écrite uniquement par l'admin)
+    // La session active est déterminée par les dates officielles :
+    // le client ne peut JAMAIS choisir la session active.
+    // ===============================================================
+    match /bac_sessions/{sessionId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidBacSession(incoming());
+      allow update: if isAdmin() && isValidBacSession(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // Configuration des matières/coefficients par session (source vérifiée)
+    match /bac_subject_configs/{configId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidBacSubjectConfig(incoming());
+      allow update: if isAdmin() && isValidBacSubjectConfig(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // Sonde de synchronisation d'horloge (heure serveur).
+    // Chaque utilisateur n'écrit que sa propre sonde, une seule à la fois.
+    match /syncProbes/{id} {
+      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow create: if isSignedIn() && incoming().uid == request.auth.uid
+        && isValidTimestamp(incoming().get('serverTime', null));
+      allow update: if isSignedIn() && existing().uid == request.auth.uid && incoming().uid == request.auth.uid
+        && isValidTimestamp(incoming().get('serverTime', null));
+    }
+
+    // Notifications de transition de session (une seule fois par utilisateur)
+    match /session_transition_notifications/{id} {
+      allow read, create: if isSignedIn() && incoming().uid == request.auth.uid;
+      allow update, delete: if isSignedIn() && existing().uid == request.auth.uid && incoming().uid == request.auth.uid;
+    }
+
+    // Journal d'audit : écriture par l'utilisateur connecté (ses propres logs),
+    // lecture réservée à l'admin.
+    match /audit_logs/{id} {
+      allow create: if isSignedIn() && incoming().uid == request.auth.uid
+        && incoming().get('action', '') is string && incoming().action.size() <= 200
+        && isValidTimestamp(incoming().get('timestamp', null));
+      allow read: if isAdmin();
     }
   }
 }

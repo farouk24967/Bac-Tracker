@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { Trophy } from 'lucide-react';
+import { useBacSession } from '../hooks/useBacSession';
 
 interface SubjectProgress {
   name: string;
@@ -36,6 +37,36 @@ const getSubjectStyles = (subject: string) => {
 export const SubjectRaceChart: React.FC<SubjectRaceChartProps> = ({ data, lang }) => {
   // Sort data by progress descending for the "race" ranking
   const sortedData = [...data].sort((a, b) => b.progress - a.progress);
+  const { active } = useBacSession();
+  const sessionYear = active?.year || new Date().getFullYear();
+
+  const tDict = {
+    fr: {
+      progressMax: 'Progression Max',
+      bacCircuit: `Circuit Bac ${sessionYear}`,
+      liveRankings: 'Live Rankings',
+      basedOnProgress: 'Based on current progress'
+    },
+    en: {
+      progressMax: 'Max Progression',
+      bacCircuit: `Bac Circuit ${sessionYear}`,
+      liveRankings: 'Live Rankings',
+      basedOnProgress: 'Based on current progress'
+    },
+    es: {
+      progressMax: 'Progreso Máximo',
+      bacCircuit: `Circuito Bac ${sessionYear}`,
+      liveRankings: 'Clasificaciones en vivo',
+      basedOnProgress: 'Según el progreso actual'
+    },
+    ar: {
+      progressMax: 'أقصى تقدم',
+      bacCircuit: `دورة بكالوريا ${sessionYear}`,
+      liveRankings: 'تحديث مباشر',
+      basedOnProgress: 'بناءً على التقدم الحالي'
+    }
+  };
+  const t = tDict[lang] || tDict.fr;
 
   return (
     <div className="w-full space-y-5 py-4">
@@ -106,19 +137,19 @@ export const SubjectRaceChart: React.FC<SubjectRaceChartProps> = ({ data, lang }
          <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
                <div className="w-2 h-2 rounded-[2px] bg-emerald-500" />
-               <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Progression Max</span>
+               <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t.progressMax}</span>
             </div>
             <div className="flex items-center gap-2">
                <div className="w-2 h-5 bg-primary-50 rounded-full border border-primary-100" />
-               <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Circuit Bac 2026</span>
+               <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t.bacCircuit}</span>
             </div>
          </div>
          <div className="text-right">
             <p className="text-[10px] font-black text-slate-800 uppercase tracking-tighter">
-               {lang === 'ar' ? "تحديث مباشر" : "Live Rankings"}
+               {t.liveRankings}
             </p>
             <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
-               {lang === 'ar' ? 'بناءً على التقدم الحالي' : 'Based on current progress'}
+               {t.basedOnProgress}
             </p>
          </div>
       </div>

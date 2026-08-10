@@ -14,85 +14,15 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { Language, Stream } from '../types';
 import { STREAMS } from '../constants';
+import { getStreamSubjectsWithCoefficients, DEFAULT_BAC_YEAR, SubjectConfig } from '../lib/bacConfig';
 
-interface SubjectInfo {
-  name: string;
-  coef: number;
-  optional?: boolean;
-}
+type SubjectInfo = SubjectConfig;
 
-const BAC_COEFFICIENTS: Record<string, SubjectInfo[]> = {
-  "علوم تجريبية": [
-    {name: "العربية", coef: 3}, 
-    {name: "الفرنسية", coef: 2}, 
-    {name: "الإنجليزية", coef: 2}, 
-    {name: "التربية الإسلامية", coef: 2},
-    {name: "التاريخ والجغرافيا", coef: 2}, 
-    {name: "الرياضيات", coef: 5}, 
-    {name: "علوم الطبيعة والحياة", coef: 6},
-    {name: "العلوم الفيزيائية", coef: 5}, 
-    {name: "الفلسفة", coef: 2},
-    {name: "التربية البدنية", coef: 1, optional: true}
-  ],
-  "رياضيات": [
-    {name: "العربية", coef: 3}, 
-    {name: "الفرنسية", coef: 2}, 
-    {name: "الإنجليزية", coef: 2}, 
-    {name: "التربية الإسلامية", coef: 2},
-    {name: "التاريخ والجغرافيا", coef: 2}, 
-    {name: "الرياضيات", coef: 7}, 
-    {name: "علوم الطبيعة والحياة", coef: 2},
-    {name: "العلوم الفيزيائية", coef: 6}, 
-    {name: "الفلسفة", coef: 2},
-    {name: "التربية البدنية", coef: 1, optional: true}
-  ],
-  "تقني رياضي": [
-    {name: "العربية", coef: 2}, 
-    {name: "الفرنسية", coef: 2}, 
-    {name: "الإنجليزية", coef: 2}, 
-    {name: "التربية الإسلامية", coef: 2},
-    {name: "التاريخ والجغرافيا", coef: 2}, 
-    {name: "الرياضيات", coef: 6}, 
-    {name: "العلوم الفيزيائية", coef: 6}, 
-    {name: "التكنولوجيا", coef: 7},
-    {name: "الفلسفة", coef: 2},
-    {name: "التربية البدنية", coef: 1, optional: true}
-  ],
-  "تسيير واقتصاد": [
-    {name: "العربية", coef: 3}, 
-    {name: "الفرنسية", coef: 2}, 
-    {name: "الإنجليزية", coef: 2}, 
-    {name: "التربية الإسلامية", coef: 2},
-    {name: "التاريخ والجغرافيا", coef: 4}, 
-    {name: "الرياضيات", coef: 5}, 
-    {name: "الاقتصاد والمناجمنت", coef: 5},
-    {name: "القانون", coef: 2},
-    {name: "التسيير المحاسبي والمالي", coef: 6},
-    {name: "الفلسفة", coef: 2},
-    {name: "التربية البدنية", coef: 1, optional: true}
-  ],
-  "لغات أجنبية": [
-    {name: "العربية", coef: 5}, 
-    {name: "الفرنسية", coef: 5}, 
-    {name: "الإنجليزية", coef: 5}, 
-    {name: "اللغة الأجنبية الثالثة", coef: 4},
-    {name: "التربية الإسلامية", coef: 2},
-    {name: "التاريخ والجغرافيا", coef: 3}, 
-    {name: "الرياضيات", coef: 2}, 
-    {name: "الفلسفة", coef: 2},
-    {name: "التربية البدنية", coef: 1, optional: true}
-  ],
-  "آداب وفلسفة": [
-    {name: "العربية", coef: 6}, 
-    {name: "الفرنسية", coef: 3}, 
-    {name: "الإنجليزية", coef: 3}, 
-    {name: "التربية الإسلامية", coef: 2},
-    {name: "التاريخ والجغرافيا", coef: 4}, 
-    {name: "الرياضيات", coef: 2}, 
-    {name: "الفلسفة", coef: 6},
-    {name: "التربية البدنية", coef: 1, optional: true}
-  ]
-};
+// Configuration BAC + Année scolaire : une seule source de vérité
+// (lib/bacConfig.ts) — les coefficients sont spécifiques à la session.
+const BAC_COEFFICIENTS: Record<string, SubjectInfo[]> = Object.fromEntries(
+  STREAMS.map(s => [s, getStreamSubjectsWithCoefficients(DEFAULT_BAC_YEAR, s)])
+);
 
 // Aliases for French names
 const STREAM_ALIASES: Record<string, string> = {
@@ -108,78 +38,9 @@ const STREAM_ALIASES: Record<string, string> = {
   "GE": "تسيير واقتصاد"
 };
 
-const YEARLY_COEFFICIENTS: Record<string, SubjectInfo[]> = {
-  "علوم تجريبية": [
-    {name: "العربية", coef: 3}, 
-    {name: "الفرنسية", coef: 2}, 
-    {name: "الإنجليزية", coef: 2}, 
-    {name: "التربية الإسلامية", coef: 2},
-    {name: "التاريخ والجغرافيا", coef: 2}, 
-    {name: "الرياضيات", coef: 5}, 
-    {name: "علوم الطبيعة والحياة", coef: 6},
-    {name: "العلوم الفيزيائية", coef: 5}, 
-    {name: "الفلسفة", coef: 2},
-    {name: "التربية البدنية", coef: 1, optional: true}
-  ],
-  "رياضيات": [
-    {name: "العربية", coef: 3}, 
-    {name: "الفرنسية", coef: 2}, 
-    {name: "الإنجليزية", coef: 2}, 
-    {name: "التربية الإسلامية", coef: 2},
-    {name: "التاريخ والجغرافيا", coef: 2}, 
-    {name: "الرياضيات", coef: 7}, 
-    {name: "علوم الطبيعة والحياة", coef: 2},
-    {name: "العلوم الفيزيائية", coef: 6}, 
-    {name: "الفلسفة", coef: 2},
-    {name: "التربية البدنية", coef: 1, optional: true}
-  ],
-  "تقني رياضي": [
-    {name: "العربية", coef: 2}, 
-    {name: "الفرنسية", coef: 2}, 
-    {name: "الإنجليزية", coef: 2}, 
-    {name: "التربية الإسلامية", coef: 2},
-    {name: "التاريخ والجغرافيا", coef: 2}, 
-    {name: "الرياضيات", coef: 6}, 
-    {name: "العلوم الفيزيائية", coef: 6}, 
-    {name: "التكنولوجيا", coef: 7},
-    {name: "الفلسفة", coef: 2},
-    {name: "التربية البدنية", coef: 1, optional: true}
-  ],
-  "تسيير واقتصاد": [
-    {name: "العربية", coef: 3}, 
-    {name: "الفرنسية", coef: 2}, 
-    {name: "الإنجليزية", coef: 2}, 
-    {name: "التربية الإسلامية", coef: 2},
-    {name: "التاريخ والجغرافيا", coef: 4}, 
-    {name: "الرياضيات", coef: 5}, 
-    {name: "الاقتصاد والمناجمنت", coef: 5},
-    {name: "القانون", coef: 2},
-    {name: "التسيير المحاسبي والمالي", coef: 6},
-    {name: "الفلسفة", coef: 2},
-    {name: "التربية البدنية", coef: 1, optional: true}
-  ],
-  "لغات أجنبية": [
-    {name: "العربية", coef: 5}, 
-    {name: "الفرنسية", coef: 5}, 
-    {name: "الإنجليزية", coef: 5}, 
-    {name: "اللغة الأجنبية الثالثة", coef: 4},
-    {name: "التربية الإسلامية", coef: 2},
-    {name: "التاريخ والجغرافيا", coef: 3}, 
-    {name: "الالرياضيات", coef: 2}, 
-    {name: "الفلسفة", coef: 2},
-    {name: "التربية البدنية", coef: 1, optional: true}
-  ],
-  "آداب وفلسفة": [
-    {name: "العربية", coef: 6}, 
-    {name: "الفرنسية", coef: 3}, 
-    {name: "الإنجليزية", coef: 3}, 
-    {name: "التربية الإسلامية", coef: 2},
-    {name: "التاريخ والجغرافيا", coef: 4}, 
-    {name: "الرياضيات", coef: 2}, 
-    {name: "الفلسفة", coef: 6},
-    {name: "التربية البدنية", coef: 1, optional: true}
-  ]
-};
+// Les coefficients annuels (3AS) utilisent la même source que le BAC
+// pour garantir un calcul identique en ligne et hors ligne.
+const YEARLY_COEFFICIENTS: Record<string, SubjectInfo[]> = BAC_COEFFICIENTS;
 
 interface AverageCalculatorProps {
   userProfile: any;
@@ -191,6 +52,81 @@ export const AverageCalculator: React.FC<AverageCalculatorProps> = ({ userProfil
   const [grades, setGrades] = useState<Record<string, { f?: number, cc?: number, tp?: number, exam?: number, average?: number, included: boolean }>>({});
   const [result, setResult] = useState<number | null>(null);
   const lang: Language = userProfile.language || 'fr';
+  const tDict = {
+    fr: {
+      average_calculator: 'Calculateur de Moyenne',
+      average_calculator_desc: "Calcule ta moyenne pour le Bac ou l'année scolaire (3AS).",
+      baccalaureate: 'Baccalauréat',
+      school_year: 'Année Scolaire',
+      enter_grades: 'Saisie des notes',
+      choose_correct_stream: 'Veuillez choisir la bonne filière',
+      calculate_average: 'Calculer la moyenne',
+      reset: 'Réinitialiser',
+      result: 'Résultat',
+      passed: 'Admis',
+      failed: 'Ajourné',
+      enter_notes_to_calc: 'Saisis tes notes',
+      information: 'Informations',
+      bac_formula_desc: "La moyenne du Bac est calculée en multipliant la moyenne de chaque matière par son coefficient.",
+      yearly_formula_desc: 'Formule de calcul : (CC + TP + F + Exam × 2) / 5.',
+      choose_stream_warning: 'Assure-toi de choisir la bonne filière avant de commencer la saisie.'
+    },
+    en: {
+      average_calculator: 'Average Calculator',
+      average_calculator_desc: 'Calculate your average for the Bac or the school year (3AS).',
+      baccalaureate: 'Baccalaureate',
+      school_year: 'School Year',
+      enter_grades: 'Enter Grades',
+      choose_correct_stream: 'Please choose the correct stream',
+      calculate_average: 'Calculate the average',
+      reset: 'Reset',
+      result: 'Result',
+      passed: 'Passed',
+      failed: 'Failed',
+      enter_notes_to_calc: 'Enter your grades',
+      information: 'Information',
+      bac_formula_desc: "The Bac average is calculated by multiplying each subject's average by its coefficient.",
+      yearly_formula_desc: 'Calculation formula: (CC + TP + F + Exam × 2) / 5.',
+      choose_stream_warning: 'Make sure you choose the correct stream before entering grades.'
+    },
+    es: {
+      average_calculator: 'Calculadora de media',
+      average_calculator_desc: 'Calcula tu media para el Bac o para el año escolar (3AS).',
+      baccalaureate: 'Bachillerato',
+      school_year: 'Año Escolar',
+      enter_grades: 'Ingreso de notas',
+      choose_correct_stream: 'Por favor elige la especialidad correcta',
+      calculate_average: 'Calcular la media',
+      reset: 'Restablecer',
+      result: 'Resultado',
+      passed: 'Aprobado',
+      failed: 'Suspendido',
+      enter_notes_to_calc: 'Ingresa tus notas',
+      information: 'Información',
+      bac_formula_desc: 'La media del Bac se calcula multiplicando la media de cada materia por su coeficiente.',
+      yearly_formula_desc: 'Fórmula de cálculo: (CC + TP + F + Exam × 2) / 5.',
+      choose_stream_warning: 'Asegúrate de elegir la especialidad correcta antes de comenzar a ingresar notas.'
+    },
+    ar: {
+      average_calculator: 'حاسبة المعدل',
+      average_calculator_desc: 'احسب معدلك للبكالوريا أو للسنة الدراسية (3 ثانوي).',
+      baccalaureate: 'البكالوريا',
+      school_year: 'السنة الدراسية',
+      enter_grades: 'إدخال العلامات',
+      choose_correct_stream: 'يرجى اختيار الشعبة الصحيحة',
+      calculate_average: 'احسب المعدل',
+      reset: 'مسح',
+      result: 'النتيجة',
+      passed: 'ناجح',
+      failed: 'راسب',
+      enter_notes_to_calc: 'أدخل العلامات للحساب',
+      information: 'معلومات',
+      bac_formula_desc: 'يتم حساب معدل البكالوريا بضرب معدل كل مادة في معاملها وقسمة المجموع على مجموع المعاملات.',
+      yearly_formula_desc: 'صيغة حساب معدل المادة: (التقويم + الأعمال + الفرض + الاختبار × 2) / 5.',
+      choose_stream_warning: 'تأكد من اختيار الشعبة الصحيحة قبل البدء في إدخال العلامات.'
+    }
+  };
+  const t = tDict[lang] || tDict.fr;
 
   const streamKey = STREAM_ALIASES[stream] || stream;
   const currentSubjects = (mode === 'bac' ? BAC_COEFFICIENTS[streamKey] : YEARLY_COEFFICIENTS[streamKey]) || [];
@@ -273,10 +209,10 @@ export const AverageCalculator: React.FC<AverageCalculatorProps> = ({ userProfil
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h2 className="text-3xl font-bold text-slate-900">
-            {lang === 'ar' ? "حاسبة المعدل" : "Calculateur de Moyenne"}
+            {t.average_calculator}
           </h2>
           <p className="text-slate-500 mt-1">
-            {lang === 'ar' ? "احسب معدلك للبكالوريا أو للسنة الدراسية (3 ثانوي)." : "Calcule ta moyenne pour le Bac ou l'année scolaire (3AS)."}
+            {t.average_calculator_desc}
           </p>
         </div>
 
@@ -288,7 +224,7 @@ export const AverageCalculator: React.FC<AverageCalculatorProps> = ({ userProfil
               mode === 'bac' ? "bg-primary-600 text-white shadow-lg shadow-primary-100" : "text-slate-500 hover:bg-slate-50"
             )}
           >
-            {lang === 'ar' ? "البكالوريا" : "Baccalauréat"}
+            {t.baccalaureate}
           </button>
           <button 
             onClick={() => setMode('yearly')}
@@ -297,7 +233,7 @@ export const AverageCalculator: React.FC<AverageCalculatorProps> = ({ userProfil
               mode === 'yearly' ? "bg-primary-600 text-white shadow-lg shadow-primary-100" : "text-slate-500 hover:bg-slate-50"
             )}
           >
-            {lang === 'ar' ? "السنة الدراسية" : "Année Scolaire"}
+            {t.school_year}
           </button>
         </div>
       </div>
@@ -311,7 +247,7 @@ export const AverageCalculator: React.FC<AverageCalculatorProps> = ({ userProfil
                   <BookOpen className="w-5 h-5 text-primary-600" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900">
-                  {lang === 'ar' ? "إدخال العلامات" : "Saisie des notes"}
+                  {t.enter_grades}
                 </h3>
               </div>
               <select 
@@ -421,7 +357,7 @@ export const AverageCalculator: React.FC<AverageCalculatorProps> = ({ userProfil
                   )) : (
                     <tr>
                       <td colSpan={6} className="py-10 text-center text-slate-400 font-bold">
-                        {lang === 'ar' ? "يرجى اختيار الشعبة الصحيحة" : "Veuillez choisir la bonne filière"}
+                        {t.choose_correct_stream}
                       </td>
                     </tr>
                   )}
@@ -435,14 +371,14 @@ export const AverageCalculator: React.FC<AverageCalculatorProps> = ({ userProfil
                 className="flex-1 bg-primary-600 text-white py-4 rounded-2xl font-bold shadow-xl shadow-primary-100 hover:bg-primary-700 transition-all flex items-center justify-center gap-2"
               >
                 <Calculator className="w-5 h-5" />
-                {lang === 'ar' ? "احسب المعدل" : "Calculer la moyenne"}
+                {t.calculate_average}
               </button>
               <button
                 onClick={reset}
                 className="px-8 py-4 bg-slate-50 text-slate-500 rounded-2xl font-bold hover:bg-slate-100 transition-all flex items-center justify-center gap-2"
               >
                 <RotateCcw className="w-5 h-5" />
-                {lang === 'ar' ? "مسح" : "Réinitialiser"}
+                {t.reset}
               </button>
             </div>
           </div>
@@ -457,7 +393,7 @@ export const AverageCalculator: React.FC<AverageCalculatorProps> = ({ userProfil
             <div className="relative z-10">
               <h3 className="text-xl font-bold mb-8 flex items-center gap-3">
                 <Calculator className="w-6 h-6 text-primary-400" />
-                {lang === 'ar' ? "النتيجة" : "Résultat"}
+                {t.result}
               </h3>
 
               <div className="text-center py-10">
@@ -476,7 +412,7 @@ export const AverageCalculator: React.FC<AverageCalculatorProps> = ({ userProfil
                         "inline-block px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest",
                         result >= 10 ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"
                       )}>
-                        {result >= 10 ? (lang === 'ar' ? "ناجح" : "Admis") : (lang === 'ar' ? "راسب" : "Ajourné")}
+                        {result >= 10 ? t.passed : t.failed}
                       </div>
                       
                       {result >= 16 && <p className="text-amber-400 font-bold text-sm">ممتاز! 🎉</p>}
@@ -493,7 +429,7 @@ export const AverageCalculator: React.FC<AverageCalculatorProps> = ({ userProfil
                     >
                       <p className="text-6xl font-black text-white tabular-nums">--.--</p>
                       <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                        {lang === 'ar' ? "أدخل العلامات للحساب" : "Saisis tes notes"}
+                        {t.enter_notes_to_calc}
                       </p>
                     </motion.div>
                   )}
@@ -505,14 +441,14 @@ export const AverageCalculator: React.FC<AverageCalculatorProps> = ({ userProfil
           <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100">
             <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
               <Info className="w-5 h-5 text-primary-600" />
-              {lang === 'ar' ? "معلومات" : "Informations"}
+              {t.information}
             </h3>
             <div className="space-y-4">
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
                 <p className="text-xs text-slate-500 leading-relaxed">
                   {mode === 'bac' 
-                    ? (lang === 'ar' ? "يتم حساب معدل البكالوريا بضرب معدل كل مادة في معاملها وقسمة المجموع على مجموع المعاملات." : "La moyenne du Bac est calculée en multipliant la moyenne de chaque matière par son coefficient.")
-                    : (lang === 'ar' ? "صيغة حساب معدل المادة: (التقويم + الأعمال + الفرض + الاختبار × 2) / 5." : "Formule de calcul : (CC + TP + F + Exam × 2) / 5.")
+                    ? t.bac_formula_desc
+                    : t.yearly_formula_desc
                   }
                 </p>
               </div>
@@ -520,7 +456,7 @@ export const AverageCalculator: React.FC<AverageCalculatorProps> = ({ userProfil
               <div className="flex items-start gap-3 p-4 bg-amber-50 rounded-2xl border border-amber-100">
                 <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
                 <p className="text-[10px] text-amber-700 font-medium leading-relaxed">
-                  {lang === 'ar' ? "تأكد من اختيار الشعبة الصحيحة قبل البدء في إدخال العلامات." : "Assure-toi de choisir la bonne filière avant de commencer la saisie."}
+                  {t.choose_stream_warning}
                 </p>
               </div>
             </div>

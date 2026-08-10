@@ -5,6 +5,73 @@ const fs = require('fs');
 
 const isDev = process.argv.includes('--dev');
 
+// ─── Server-side AI proxy config (desktop only) ────────────────────────────
+// On desktop, the renderer calls /api/ai (same as on Vercel). The main process
+// proxies to Base44 with the key held in the main process, never in the UI.
+const BASE44_APP_ID = process.env.BASE44_APP_ID || '69f8f56ca433d203293833a1';
+const BASE44_API_KEY = process.env.BASE44_API_KEY || '834f7448afe2478ca477d9961fbf71fc';
+const ALLOWED_LLM_MODELS = new Set(['gemini_3_flash']);
+
+function proxyAiRequest(req, res) {
+  let raw = '';
+  req.on('data', (chunk) => { raw += chunk; });
+  req.on('end', async () => {
+    try {
+      const body = JSON.parse(raw || '{}');
+      const { model, prompt, response_json_schema } = body;
+      if (!ALLOWED_LLM_MODELS.has(model)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Model not allowed.' }));
+        return;
+      }
+      if (typeof prompt !== 'string' || prompt.trim().length === 0) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Prompt is required.' }));
+        return;
+      }
+      const payload = { model, prompt };
+      if (Array.isArray(body.file_urls)) {
+        const files = body.file_urls.filter((f) => typeof f === 'string').slice(0, 3);
+        if (files.length > 0) payload.file_urls = files;
+      }
+      if (response_json_schema !== undefined) payload.response_json_schema = response_json_schema;
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 90000);
+      try {
+        const upstream = await fetch(
+          `https://base44.app/api/apps/${BASE44_APP_ID}/integration-endpoints/Core/InvokeLLM`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+              api_key: BASE44_API_KEY,
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal,
+          }
+        );
+        const upstreamBody = await upstream.text();
+        res.writeHead(upstream.status, {
+          'Content-Type': upstream.headers.get('content-type') || 'application/json',
+          'Cache-Control': 'no-store',
+        });
+        res.end(upstreamBody);
+      } finally {
+        clearTimeout(timer);
+      }
+    } catch (err) {
+      res.writeHead(502, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'AI provider request failed.' }));
+    }
+  });
+  req.on('error', () => {
+    res.writeHead(400, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Invalid request.' }));
+  });
+}
+
 // ─── Browser Fixes ────────────────────────────────────────────────────────────
 // Disable COOP so the main window and auth popup can communicate correctly.
 // This is often required for Firebase Auth in Electron.
@@ -40,6 +107,12 @@ function startLocalServer(distPath) {
       try { urlPath = decodeURIComponent(urlPath); } catch (_) {}
 
       let filePath = path.join(distPath, urlPath === '/' ? 'index.html' : urlPath);
+
+      // AI proxy (same endpoint as the Vercel serverless function)
+      if (urlPath === '/api/ai' && req.method === 'POST') {
+        proxyAiRequest(req, res);
+        return;
+      }
 
       // SPA fallback: any path that is not a real file → serve index.html
       if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {

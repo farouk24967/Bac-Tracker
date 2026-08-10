@@ -23,7 +23,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { StudyGoal, UserProfile, Language } from '../types';
-import { translations } from '../translations';
+import { safeT } from '../translations';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
@@ -48,7 +48,7 @@ export const StudyGoals: React.FC<StudyGoalsProps> = ({ userProfile, subjects, o
   });
 
   const lang: Language = userProfile.language || 'fr';
-  const t = translations[lang];
+  const t = safeT(lang);
 
   useEffect(() => {
     const path = 'studyGoals';
@@ -173,13 +173,13 @@ export const StudyGoals: React.FC<StudyGoalsProps> = ({ userProfile, subjects, o
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{lang === 'ar' ? 'المادة' : 'Matière'}</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t.subjectLabel}</label>
                 <select
                   value={newGoal.subject}
                   onChange={(e) => setNewGoal({ ...newGoal, subject: e.target.value })}
                   className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 outline-none font-bold text-slate-600"
                 >
-                  <option value="">{lang === 'ar' ? 'هدف عام' : 'Objectif global'}</option>
+                  <option value="">{t.globalGoal}</option>
                   {subjects.map(s => (
                     <option key={s} value={s}>{s}</option>
                   ))}
